@@ -38,7 +38,6 @@ class EntropyActiveLearner:
 
         self._batch_size = batch_size
         self._labeler = labeler
-        self._labeled_ids = None
         self._model = copy(model)
         self._max_iter = max_iter
         self.local_training_fvs_ = None
@@ -82,7 +81,7 @@ class EntropyActiveLearner:
 
         return self._model.prep_fvs(fvs)
 
-    def train(self, fvs, start_ids):
+    def train(self, fvs, seeds):
         """
         run active learning
 
@@ -97,14 +96,13 @@ class EntropyActiveLearner:
         type_check(fvs, 'fvs', pyspark.sql.DataFrame)
 
         spark = SparkSession.builder.getOrCreate()
-        self._labeled_ids = start_ids.copy()
 
         fvs = self._prep_fvs(fvs)
 
         with persisted(fvs) as fvs:
             n_fvs = fvs.count()
             # just label everything and return 
-            if n_fvs <= len(start_ids) + (self._batch_size * self._max_iter):
+            if n_fvs <= len(seeds) + (self._batch_size * self._max_iter):
                 if self._terminate_if_label_everything:
                     log.info('running al to completion would label everything, labeling all fvs and returning')
                     return self._label_everything(fvs)
@@ -112,8 +110,7 @@ class EntropyActiveLearner:
                     log.info('running al to completion would label everything, but self._terminate_if_label_everything is False so AL will still run')
 
 
-            self.local_training_fvs_ = self._select_training_vectors(fvs, self._labeled_ids).toPandas()
-            self.local_training_fvs_['label'] = self.local_training_fvs_[['id1', 'id2']].apply(lambda x: float(self._labeler(*x.values)), axis=1)
+            self.local_training_fvs_ = seeds.copy()
             # seed feature vectors
             self.local_training_fvs_['labeled_in_iteration'] = -1
             schema = spark.createDataFrame(self.local_training_fvs_).schema

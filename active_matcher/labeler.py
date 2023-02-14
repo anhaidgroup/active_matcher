@@ -10,7 +10,7 @@ class Labeler(ABC):
 
         returns
         -------
-            bool or float : the label for the pair
+            float : the label for the pair
         """
         pass
 
@@ -20,5 +20,5 @@ class GoldLabeler(Labeler):
         self._gold = gold
 
     def __call__(self, id1, id2):
-        return (id1, id2) in self._gold
+        return 1.0 if (id1, id2) in self._gold else 0.0
 
