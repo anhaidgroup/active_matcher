@@ -38,7 +38,7 @@ fvs = fv_gen.generate_fvs(cands_df)
 
 ```python
 fvs = fvs.withColumn('score', F.aggregate('features', F.lit(0.0), lambda acc, x : acc + x))
-seed_ids = select_seeds(fvs, 'score', 50, labeler)
+seeds = select_seeds(fvs, 'score', 50, labeler)
 ```
 
 5. Active Learning
@@ -47,7 +47,7 @@ seed_ids = select_seeds(fvs, 'score', 50, labeler)
 model = SKLearnModel(HistGradientBoostingClassifier)
 
 al = EntropyActiveLearner(model, labeler, batch_size=10, max_iter=50)
-trained_model = al.train(train_fvs, seed_ids)
+trained_model = al.train(train_fvs, seeds)
 
 fvs = trained_model.predict(fvs, 'features', 'prediction')
 fvs.show()
@@ -73,4 +73,6 @@ as long as version 3.1.2 or greater is used.
 
 ## Tutorials
 
-TODO FIXME
+To get started with ActiveMatcher we recommend starting with the IPython notebook included with 
+the repository [examples/example.ipynb](https://github.com/derekpaulsen/active_matcher/blob/main/examples/example.ipynb).
+
