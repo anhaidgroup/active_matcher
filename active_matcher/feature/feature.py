@@ -160,7 +160,7 @@ class RelDiffFeature(Feature):
 
         vals = floats.values.astype(np.float32)
 
-        return pd.Series(np.abs(vals - f) / np.maximum(np.abs(vals), np.abs(f)), index=floats.index)
+        return pd.Series(np.abs(vals - f) / np.maximum(np.abs(vals), np.abs(f)), index=floats.index).astype(np.float64)
 
     def __str__(self):
         return f'rel_diff({self.a_attr}, {self.b_attr})'
@@ -186,7 +186,7 @@ class EditDistanceFeature(Feature):
             return pd.Series(np.nan, index=strings.index)
 
         strings = strings.apply(lambda x : str(x).lower() if pd.notnull(x) else None)
-        return strings.apply(lambda x : self._func(s, x) if x is not None else np.nan)
+        return strings.apply(lambda x : self._func(s, x) if x is not None else np.nan).astype(np.float64)
 
     def __str__(self):
         return f'edit_distance({self.a_attr}, {self.b_attr})'
@@ -219,7 +219,7 @@ class NeedlemanWunschFeature(Feature):
             return pd.Series(np.nan, index=strings.index)
 
         strings = strings.apply(lambda x : str(x).lower() if pd.notnull(x) else None)
-        return strings.apply(lambda x : self._sim_func(s, x) if x is not None else np.nan)
+        return strings.apply(lambda x : self._sim_func(s, x) if x is not None else np.nan).astype(np.float64)
 
     def __str__(self):
         return f'needleman_wunch({self.a_attr}, {self.b_attr})'
@@ -255,7 +255,7 @@ class SmithWatermanFeature(Feature):
             return pd.Series(np.nan, index=strings.index)
 
         strings = strings.apply(lambda x : str(x).lower() if pd.notnull(x) else None)
-        return strings.apply(lambda x : self._sim_func(s, x) if x is not None else np.nan)
+        return strings.apply(lambda x : self._sim_func(s, x) if x is not None else np.nan).astype(np.float64)
 
     def __str__(self):
         return f'smith_waterman({self.a_attr}, {self.b_attr})'

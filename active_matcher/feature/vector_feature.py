@@ -93,7 +93,7 @@ class TFIDFFeature(TokenFeature):
         vecs = recs[self._a_vec_col]
         if vec is None:
             return pd.Series(np.nan, index=vecs.index)
-        return vecs.apply(lambda x : vec.dot(x) if x is not None else np.nan)
+        return vecs.apply(lambda x : vec.dot(x) if x is not None else np.nan).astype(np.float64)
 
 class SIFFeature(TFIDFFeature):
     def __init__(self, a_attr, b_attr, tokenizer):

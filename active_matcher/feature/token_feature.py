@@ -43,14 +43,14 @@ class TokenFeature(Feature):
         if is_null(s):
             return pd.Series(np.nan, index=recs.index)
         sets = recs[self._a_toks_col]
-        return sets.apply(lambda x : self.sim_func(s, x))
+        return sets.apply(lambda x : self.sim_func(s, x)).astype(np.float64)
 
 
 def _overlap(x,y):
     if is_null(x) or is_null(y):
         return np.nan
     elif len(x) == 0 or len(y) == 0:
-        return 0
+        return 0.0
     elif len(x) < len(y):
         return sum((e in y) for e in x)
     else:
@@ -61,7 +61,7 @@ def _jaccard(x,y):
     if np.isnan(olap):
         return np.nan
     elif olap == 0:
-        return 0
+        return 0.0
     else:
         return olap / (len(x) + len(y) - olap)
 
@@ -70,7 +70,7 @@ def _overlap_coeff(x,y):
     if np.isnan(olap):
         return np.nan
     elif olap == 0:
-        return 0
+        return 0.0
     else:
         return olap / min(len(x), len(y))
 
@@ -98,7 +98,7 @@ class CosineFeature(TokenFeature):
         if np.isnan(olap):
             return np.nan
         elif olap == 0:
-            return 0
+            return 0.0
         else:
             return olap / math.sqrt(len(x) * len(y))
 
