@@ -1,4 +1,6 @@
 import pyspark.sql.functions as F    
+from tqdm import tqdm
+import traceback
 from pyspark.sql import SparkSession
 import pandas as pd
 import numpy as np
@@ -8,7 +10,7 @@ from active_matcher.utils import persisted, get_logger, repartition_df, type_che
 from active_matcher.labeler import Labeler
 from active_matcher.ml_model import MLModel, SKLearnModel, convert_to_array, convert_to_vector
 from pyspark.ml.functions import vector_to_array, array_to_vector
-from queue import PriorityQueue, Queue
+from queue import PriorityQueue, Queue, Empty
 from threading import Thread, Event
 import pyspark
 from math import ceil
@@ -108,117 +110,126 @@ class ContinuousEntropyActiveLearner:
         stop_training = Event()
 
         training_thread = Thread(target=self._training_loop, args=(to_be_label_queue, labeled_queue, stop_training, fvs, seeds))
-        
+        training_thread.start()
         # run labeler in main thread
         nlabeled = len(seeds)
-        while nlabeled < self._max_labeled:
-            example = to_be_label_queue.get()
-            example['label'] = float(self._labeler(example['id1'], example['id2']))
-            labeled_queue.put(example)
-        
+        log.info('running training')
+        with tqdm(total=self._max_labeled - len(seeds)) as prog_bar:
+            while nlabeled < self._max_labeled:
+                try:
+                    example = to_be_label_queue.get(timeout=10).item
+                except Empty:
+                    if not training_thread.is_alive():
+                        raise RuntimeError('label queue is empty by training thread is dead, likely due to an exception during training')
+                else:
+                    # example gotten, label and send back to training thread
+                    example['label'] = float(self._labeler(example['id1'], example['id2']))
+                    labeled_queue.put(example)
+                    prog_bar.update(1)
+                    nlabeled += 1
+        # signal training thread to stop and wait for termination
+        stop_training.set()
         training_thread.join()
 
         return copy(self._model)
 
 
     def _training_loop(self, to_be_label_queue, labeled_queue, stop_event, fvs, seeds):
-        spark = SparkSession.builder.getOrCreate()
+        try:
+            spark = SparkSession.builder.getOrCreate()
 
-        fvs = self._prep_fvs(fvs)
+            fvs = self._prep_fvs(fvs)
 
-        with persisted(fvs) as fvs:
-            n_fvs = fvs.count()
-            # just label everything and return 
+            with persisted(fvs) as fvs:
+                n_fvs = fvs.count()
+                # just label everything and return 
+                if n_fvs <= len(seeds) + self._max_labeled:
+                    if self._terminate_if_label_everything:
+                        log.info('running al to completion would label everything, labeling all fvs and returning')
+                        return self._label_everything(fvs)
+                    else:
+                        log.info('running al to completion would label everything, but self._terminate_if_label_everything is False so AL will still run')
 
-            stop_after = min(self._max_labeled, n_fvs)
-            if n_fvs <= len(seeds) + self._max_labeled:
-                if self._terminate_if_label_everything:
-                    log.info('running al to completion would label everything, labeling all fvs and returning')
-                    return self._label_everything(fvs)
-                else:
-                    log.info('running al to completion would label everything, but self._terminate_if_label_everything is False so AL will still run')
+                self.local_training_fvs_ = seeds.copy()
+                self.local_training_fvs_.set_index('_id', drop=False, inplace=True)
+                # seed feature vectors
+                self.local_training_fvs_['labeled_in_iteration'] = -1
+                schema = spark.createDataFrame(self.local_training_fvs_).schema
 
-            self.local_training_fvs_ = seeds.copy()
-            self.local_training_fvs_.set_index('_id', drop=False, inplace=True)
-            # seed feature vectors
-            self.local_training_fvs_['labeled_in_iteration'] = -1
-            schema = spark.createDataFrame(self.local_training_fvs_).schema
+                total_pos, total_neg = self._get_pos_negative(self.local_training_fvs_)
+                if total_pos == 0 or total_neg == 0:
+                    log.error(f'total positive = {total_pos} negative = {total_neg}')
+                    raise RuntimeError('both postive and negative vectors are required for training')
 
-            total_pos, total_neg = self._get_pos_negative(self.local_training_fvs_)
-            if total_pos == 0 or total_neg == 0:
-                log.error(f'total positive = {total_pos} negative = {total_neg}')
-                raise RuntimeError('both postive and negative vectors are required for training')
-
-            log.info(f'stop after labeling = {stop_after}')
-            
-            i = -1
-            while len(self.local_training_fvs_) < stop_after and not stop_event.is_set():
-                i += 1
-                # wait for more stuff to be labeled
-                while self._queue_size - to_be_label_queue.size() < self._min_batch_size:
-                    time.sleep(1)
                 
-                # get new labeled examples
-                new_examples = []
-                while not labeled_queue.empty():
-                    new_examples.append(labeled_queue.get())
-                # add new examples if there are any
-                if len(new_examples) != 0:
-                    df = pd.DataFrame(new_examples)\
-                            .set_index('_id')
+                i = -1
+                while not stop_event.is_set():
+                    i += 1
+                    # wait for more stuff to be labeled
+                    while self._queue_size - to_be_label_queue.qsize() < self._min_batch_size:
+                        time.sleep(1)
+                    
+                    # get new labeled examples
+                    new_examples = []
+                    while not labeled_queue.empty():
+                        new_examples.append(labeled_queue.get())
+                    # add new examples if there are any
+                    if len(new_examples) != 0:
+                        df = pd.DataFrame(new_examples)
 
-                    df['labeled_in_iteration'] = i
-                    self.local_training_fvs_.loc[df.index, 'label'] = df['label']
-                    self.local_training_fvs_.loc[df.index, 'labeled_in_iteration'] = df['labeled_in_iteration']
-                
-                # train model
-                log.info('training model')
-                training_fvs = spark.createDataFrame(self.local_training_fvs_, schema=schema)\
-                                    .repartition(len(self.local_training_fvs_) // 100 + 1, '_id')\
-                                    .persist()
+                        df['labeled_in_iteration'] = i
+                        self.local_training_fvs_.loc[df.index, 'label'] = df['label']
+                        self.local_training_fvs_.loc[df.index, 'labeled_in_iteration'] = df['labeled_in_iteration']
+                    
+                    # train model
+                    log.info('training model')
+                    training_fvs = spark.createDataFrame(self.local_training_fvs_, schema=schema)\
+                                        .repartition(len(self.local_training_fvs_) // 100 + 1, '_id')\
+                                        .persist()
 
-                self._model.train(
-                        training_fvs.dropna(subset=['label']),
-                        'features',
-                        'label'
-                )
+                    self._model.train(
+                            training_fvs.dropna(subset=['label']),
+                            'features',
+                            'label'
+                    )
 
-                cand_fvs = fvs.join(training_fvs, on='_id', how='left_anti')
-                log.info('selecting and labeling new examples')
-                # number of examples to replenish in the queue
-                batch_size = self._queue_size - to_be_label_queue.size()
-                # get next labeled batch
-                # sort by ids to make training consistent 
-                new_labeled_batch = self._model.entropy(cand_fvs, 'features', 'entropy')\
-                                        .sort(['entropy', '_id'], ascending=False)\
-                                        .limit(batch_size)\
-                                        .toPandas()
+                    cand_fvs = fvs.join(training_fvs, on='_id', how='left_anti')
+                    log.info('selecting and labeling new examples')
+                    # number of examples to replenish in the queue
+                    batch_size = self._queue_size - to_be_label_queue.qsize()
+                    # get next labeled batch
+                    # sort by ids to make training consistent 
+                    new_labeled_batch = self._model.entropy(cand_fvs, 'features', 'entropy')\
+                                            .sort(['entropy', '_id'], ascending=False)\
+                                            .limit(batch_size)\
+                                            .toPandas()\
+                                            .set_index('_id', drop=False)
 
-                new_labeled_batch['label'] = np.nan
-                self.local_training_fvs_ = pd.concat([self.local_training_fvs_, new_labeled_batch])
+                    new_labeled_batch['label'] = np.nan
+                    self.local_training_fvs_ = pd.concat([self.local_training_fvs_, new_labeled_batch])
 
-                training_fvs.unpersist()
-                
-                # push examples to the queue to be labeled
-                for i, r in new_labeled_batch.iterrows():
-                    ent = r.pop('entropy')
-                    to_be_label_queue.put(PQueueItem(ent, r))
+                    training_fvs.unpersist()
+                    
+                    # push examples to the queue to be labeled
+                    for i, r in new_labeled_batch.iterrows():
+                        ent = r.pop('entropy')
+                        to_be_label_queue.put(PQueueItem(ent, r))
 
-                pos, neg = self._get_pos_negative(new_labeled_batch)
-                total_pos += pos
-                total_neg += neg
+                    total_pos, total_neg = self._get_pos_negative(self.local_training_fvs_.dropna(subset=['label']))
 
-                self.local_training_fvs_ = pd.concat([self.local_training_fvs_, new_labeled_batch], ignore_index=True)
-                log.info(f'new batch positive = {pos} negative = {neg}, total positive = {total_pos} negative = {total_neg}')
-                
-                if n_fvs <= len(self.local_training_fvs_):
-                    log.info('all fvs labeled, terminating active learning')
-                    break
+                    log.info(f'total positive = {total_pos} negative = {total_neg}')
+                    
+                    if n_fvs <= len(self.local_training_fvs_):
+                        log.info('all fvs labeled, terminating active learning')
+                        break
 
+                self.local_training_fvs_ = self.local_training_fvs_.dropna(subset=['label'])
+                training_fvs = spark.createDataFrame(self.local_training_fvs_)
+                # final train model
+                self._model.train(training_fvs, 'features', 'label')
+        except Exception as e:
+            log.error(traceback.format_exc())
 
-            training_fvs = spark.createDataFrame(self.local_training_fvs_)
-            # final train model
-            self._model.train(training_fvs, 'features', 'label')
 
         return copy(self._model)
 
