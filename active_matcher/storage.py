@@ -1,6 +1,7 @@
 import sqlite3
 import numpy as np
 from pyspark import SparkFiles, SparkContext, StorageLevel
+import numba as nb
 import pyspark.sql.functions as F
 import pandas as pd
 import pickle
@@ -62,7 +63,7 @@ class MemmapDataFrame:
 
     def __init__(self):
         self._local_mmap_file = Path(mkstemp(suffix='.df.db')[1])
-        self._index_arr = None
+        self._id_to_offset_map = None
         self._offset_arr = None
         self._mmap_arr = None
         self._map_arr_shape = None
@@ -94,34 +95,34 @@ class MemmapDataFrame:
                         F.col(id_col).alias('_id'),
                         F.col(pickle_column).alias('pickle'), 
                         F.length(pickle_column).alias('sz')
-                    )\
-                    .persist(StorageLevel.DISK_ONLY)
-        # this is necessary to prevent memory errors
-        pdf = spark_df.select('_id', 'sz')\
-                        .toPandas()\
-                        .sort_values('_id')
+                    )
 
-        nrows = len(pdf)
+        size_arrs = []
+        id_arrs = []
+        seq_col = 'pickle'
+        itr = spark_to_pandas_stream(spark_df, 10000)
 
-        index_arr = pdf['_id'].values
+        local_mmap_file = obj._local_mmap_file 
+        # buffer 256MB at a time
+        with open(local_mmap_file, 'wb', buffering=2**20 * 256) as ofs:
+            for part in itr:
+                id_arrs.append(part[id_col].to_numpy(dtype=np.int64))
+                size_arrs.append(part['sz'].to_numpy(dtype=np.uint64))
+                for seq in part[seq_col]:
+                    ofs.write(memoryview(seq))
 
-        offset_arr = np.zeros(nrows+1, dtype=np.uint64)
-        offset_arr[1:] = pdf['sz'].cumsum()
+        id_arr = np.concatenate(id_arrs, dtype=np.int64)
+        size_arr = np.concatenate(size_arrs) 
 
+        obj._id_to_offset_map = LongIntHashMap.build(
+                id_arr+1,
+                np.arange(len(id_arr), dtype=np.int32)
+        )
+        offset_arr = np.cumsum(np.concatenate([np.zeros(1, dtype=np.uint64), size_arr]))
+        obj._offset_arr = MemmapArray(offset_arr)
         total_bytes = offset_arr[-1]
-
-        obj._index_arr = index_arr
-        obj._offset_arr = offset_arr
-        log.info('building memmap dataframe')
-        itr = spark_df.toLocalIterator(True)
-        with open(obj._local_mmap_file, 'wb') as ofs:
-            fd = ofs.fileno()
-            os.set_inheritable(fd, True)
-            Parallel(n_jobs=-1, backend='threading')(delayed(obj.write_chunk)(fd, _id, pic) for _id, pic, sz in itr)
-
         obj._mmap_arr_shape = total_bytes
 
-        spark_df.unpersist()
         return obj
  
     def init(self):
@@ -132,12 +133,17 @@ class MemmapDataFrame:
                 if not os.path.exists(f):
                     raise RuntimeError('cannot find database file at {f}')
             self._mmap_arr = np.memmap(f, mode='r', shape=self._mmap_arr_shape)
+
+        self._id_to_offset_map.init()
+        self._offset_arr.init()
     
     def delete(self):
         if self._local_mmap_file.exists():
             self._local_mmap_file.unlink()
 
     def to_spark(self):
+        self._id_to_offset_map.to_spark()
+        self._offset_arr.to_spark()
         SparkContext.getOrCreate().addFile(str(self._local_mmap_file))
         self._on_spark = True
     
@@ -145,24 +151,15 @@ class MemmapDataFrame:
     def fetch(self, ids):
         self.init()
         ids = np.array(ids) 
-        # sort for the ids
-        srt = ids.argsort()
-        # inverse sort to return the results in the order
-        # that the ids were provided
-        inv_srt = np.empty_like(srt)
-        np.put(inv_srt, srt, np.arange(srt.size, dtype=srt.dtype))
-        # sort ids to improve binary search perf
-        sorted_ids = ids[srt]
-        idxes = np.searchsorted(self._index_arr, sorted_ids)
+        idxes = self._id_to_offset_map[ids+1]
 
-        if np.any(self._index_arr[idxes] != sorted_ids):
+        if np.any(idxes < 0):
             raise ValueError('unknown id')  
 
-        starts = self._offset_arr[idxes]
-        ends = self._offset_arr[idxes+1]
-        # create array and invert sort to return 
-        # in order that ids was passed to function
-        rows = np.array([pickle.loads(self.decompress(self._mmap_arr[start:end])) for start, end in zip(starts, ends)], dtype=object)[inv_srt]
+        starts = self._offset_arr.values[idxes]
+        ends = self._offset_arr.values[idxes+1]
+
+        rows = np.array([pickle.loads(self.decompress(self._mmap_arr[start:end])) for start, end in zip(starts, ends)], dtype=object)
         df = pd.DataFrame(rows, index=ids, columns=self._columns, dtype=object)
         return df
 
@@ -350,3 +347,118 @@ class SqliteDict:
 
         return [res_dict[k] for k in keys]
 
+
+
+map_entry_t = np.dtype([('hash', np.uint64), ('val', np.int32)])
+numba_map_entry_t = nb.from_dtype(map_entry_t)
+
+njit_kwargs = {
+        'cache' : False, 
+        'parallel' : False
+}
+
+
+#@nb.njit(nb.void(numba_map_entry_t[:], nb.uint64, nb.int32), cache=True, parallel=False)
+@nb.njit(**njit_kwargs)
+def hash_map_insert_key(arr, key, val):
+    if key == 0:
+        raise ValueError('keys must be non zero')
+
+    i = key % len(arr)
+    while True:
+        if arr[i].hash == 0 or arr[i].hash == key:
+            arr[i].hash = key
+            arr[i].val = val
+            return 
+        else:
+            i += 1
+            if i == len(arr):
+                i = 0
+
+#@nb.njit(nb.void(numba_map_entry_t[:], nb.uint64[:], nb.int32[:]), cache=True, parallel=False)
+@nb.njit(**njit_kwargs)
+def hash_map_insert_keys(arr, keys, vals):
+    for i in range(len(keys)):
+        hash_map_insert_key(arr, keys[i], vals[i])
+
+
+sigs = [nb.int32(nb.types.Array(numba_map_entry_t, 1, 'C', readonly=r), nb.uint64) for r in [True, False]]
+#@nb.njit(sigs, cache=True, parallel=False)
+@nb.njit(**njit_kwargs)
+def hash_map_get_key(arr, key):
+    i = key % len(arr)
+    while True:
+        if arr[i].hash == key:
+            # hash found, return value at position
+            return arr[i].val 
+        elif arr[i].hash == 0:
+            # hash not found, return -1
+            return -1
+        else:
+            i += 1
+            if i == len(arr):
+                i = 0
+
+sigs = [nb.int32[:](nb.types.Array(numba_map_entry_t, 1, 'C', readonly=r), nb.uint64[:]) for r in [True, False]]
+#@nb.njit(sigs, cache=True, parallel=False)
+@nb.njit(**njit_kwargs)
+def hash_map_get_keys(arr, keys):
+    out = np.empty(len(keys), dtype=np.int32)
+    for i in range(len(keys)):
+        out[i] = hash_map_get_key(arr, keys[i])
+    return out
+
+
+class DistributableHashMap:
+
+    def __init__(self, arr):
+        self._memmap_arr = MemmapArray(arr)
+
+    @property
+    def _arr(self):
+        return self._memmap_arr.values
+
+    @property
+    def on_spark(self):
+        return self._memmap_arr.on_spark
+
+    def init(self):
+        self._memmap_arr.init()
+
+    def to_spark(self):
+        self._memmap_arr.to_spark()
+
+
+
+class LongIntHashMap(DistributableHashMap):
+
+    def __init__(self, arr):
+        super().__init__(arr)
+
+    @classmethod
+    def build(cls, longs, ints, load_factor=.75):
+        map_size = int(len(longs) / load_factor)
+        arr = np.zeros(map_size, dtype=map_entry_t)
+        hash_map_insert_keys(arr, longs, ints)
+
+        return cls(arr)
+
+    def __getitem__(self, keys):
+        if isinstance(keys, (np.uint64, np.int64, int)):
+            return hash_map_get_key(self._arr, np.uint64(keys))
+        elif isinstance(keys, np.ndarray):
+            return hash_map_get_keys(self._arr, keys)
+        else:
+            raise TypeError(f'unknown type {type(keys)}')
+
+def spark_to_pandas_stream(df, chunk_size):
+    df = df.repartition(max(1, df.count() // chunk_size), '_id')\
+            .rdd\
+            .mapPartitions(lambda x : iter([pd.DataFrame([e.asDict(True) for e in x]).convert_dtypes()]) )\
+            .persist(StorageLevel.DISK_ONLY)
+    # trigger read
+    df.count()
+    for batch in df.toLocalIterator(True):
+        yield batch
+
+    df.unpersist()
