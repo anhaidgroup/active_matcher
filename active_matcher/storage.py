@@ -358,13 +358,41 @@ njit_kwargs = {
 }
 
 
+
+# adapted from this blog post 
+# https://bitsquid.blogspot.com/2011/08/code-snippet-murmur-hash-inverse-pre.html
+@nb.njit(**njit_kwargs)
+def _murmurhash_64(val, seed=0):
+    val = np.uint64(val)
+    m = np.uint64(0xc6a4a7935bd1e995)
+    r = 47;
+
+    h = seed ^ (8 * m);
+
+    k = val
+
+    k *= m;
+    k ^= k >> r;
+    k *= m;
+
+    h ^= k;
+    h *= m;
+ 
+    h ^= h >> r
+    h *= m
+    h ^= h >> r
+
+    return h
+
+
+
 #@nb.njit(nb.void(numba_map_entry_t[:], nb.uint64, nb.int32), cache=True, parallel=False)
 @nb.njit(**njit_kwargs)
 def hash_map_insert_key(arr, key, val):
     if key == 0:
         raise ValueError('keys must be non zero')
 
-    i = key % len(arr)
+    i = _murmurhash_64(key) % len(arr)
     while True:
         if arr[i].hash == 0 or arr[i].hash == key:
             arr[i].hash = key
@@ -386,7 +414,7 @@ sigs = [nb.int32(nb.types.Array(numba_map_entry_t, 1, 'C', readonly=r), nb.uint6
 #@nb.njit(sigs, cache=True, parallel=False)
 @nb.njit(**njit_kwargs)
 def hash_map_get_key(arr, key):
-    i = key % len(arr)
+    i = _murmurhash_64(key) % len(arr)
     while True:
         if arr[i].hash == key:
             # hash found, return value at position
