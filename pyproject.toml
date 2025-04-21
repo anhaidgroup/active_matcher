@@ -3,7 +3,7 @@ requires = ["hatchling", "hatch-requirements-txt"]
 build-backend = "hatchling.build"
 
 [project]
-name = "active_Matcher"
+name = "active_matcher"
 version = "0.1.0"
 dynamic = ["dependencies"]
 
@@ -18,7 +18,7 @@ description = "Active Matcher has been developed to match entities with Spark. I
 readme = "README.md"
 license = {file = "LICENSE"}
 
-keywords = ["entity matching", "entity resolution", "matching", "Spark", "Lucene", "PyLucene", "distributed", "Sparkly"]
+keywords = ["entity matching", "entity resolution", "matching", "Spark", "distributed", "Active Learning", "Machine Learning"]
 
 classifiers = [
   # How mature is this project? Common values are
