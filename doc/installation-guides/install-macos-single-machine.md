@@ -50,13 +50,13 @@ If the output contains kegs, files, and GB, then Homebrew is installed and you c
 
 To install Homebrew, run the following command in your terminal:
 
-/bin/bash \-c "$(curl \-fsSL [https://raw.githubusercontent.com](https://raw.githubusercontent.com)
+/bin/bash -c "$(curl -fsSL [https://raw.githubusercontent.com](https://raw.githubusercontent.com)
 
 Homebrew/install/HEAD/install.sh)"
 
 The installation may prompt you to follow further instructions to add this to your PATH variables; if so, follow those onscreen instructions. This will make it easier to use brew later. If you see
 
-“Installation Successful\!” 
+“Installation Successful!” 
 
 in the output, the download was successful.
 
@@ -70,15 +70,15 @@ To download Python environments, we will use Homebrew. Run the following in the 
 
 Now, we will create a Python environment with Python 3.12. This step is necessary to make sure we use the correct version of Python with the correct dependencies. In your terminal, run:
 
-	python \-m venv \~/active\_matcher
+	python -m venv ~/active_matcher
 
 This will create a virtual environment named active\_matcher. To activate this environment, run the following:
 
-	source \~/active\_matcher/bin/activate
+	source ~/active_matcher/bin/activate
 
 To make sure everything is correct, run:
 
-	python \--version
+	python --version
 
 If the output says
 
@@ -90,7 +90,7 @@ where x ≥ 4, then the Python environment setup was successful.
 
 We will be downloading two packages: setuptools and build. Before installing, make sure you are in the virtual environment. If you have just finished Step 1C, you are in the virtual environment. Otherwise, to make sure your virtual environment is active, you can run:
 
-	source \~/active\_matcher/bin/activate
+	source ~/active_matcher/bin/activate
 
 To install setuptools, run:
 
@@ -102,7 +102,7 @@ To install build, run:
 
 If at any point during the installation you close your terminal, you will need to reactivate your virtual environment by running:
 
-	source \~/active\_matcher/bin/activate
+	source ~/active_matcher/bin/activate
 
 ### **Step 2: Active Matcher Installation**
 
@@ -112,9 +112,9 @@ Now that you have the correct version of Python installed, we can download Activ
 
 You can install Active Matcher from PyPI, using the following command:
 
-	pip install active\_matcher
+	pip install active_matcher
 
-This command will install Sparkly and all of its dependencies, such as Joblib, mmh3, Numba, Numpy, Numpydoc, Pandas, Py\_Stringmatching, PySpark, Scikit-Learn, Scipy, Threadpoolctl, TQDM, and Xgboost.
+This command will install Sparkly and all of its dependencies, such as Joblib, mmh3, Numba, Numpy, Numpydoc, Pandas, Py_Stringmatching, PySpark, Scikit-Learn, Scipy, Threadpoolctl, TQDM, and Xgboost.
 
 #### **Option 2: Pip Installing from GitHub**
 
@@ -122,7 +122,7 @@ Instead of pip installing from PyPI, you may want to pip install Active Matcher 
 
 To install Active Matcher directly from its GitHub repo, use the following command:
 
-	pip install git+https://github.com/anhaidgroup/active\_matcher.git@main
+	pip install git+https://github.com/anhaidgroup/active_matcher.git@main
 
 Similar to pip installing from PyPI, the above command will install Active Matcher and all of its dependencies.
 
