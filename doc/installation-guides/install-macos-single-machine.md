@@ -20,7 +20,7 @@ If the output path says
 
 run:
 
-	python \--version
+	python --version
 
 If the output of this is
 
@@ -34,7 +34,7 @@ which python
 
 Or
 
-python \--version
+python --version
 
 did not have the outputs listed above, do all substeps, A-D.
 
