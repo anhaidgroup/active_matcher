@@ -1,5 +1,3 @@
-![license](https://github.com/anhaidgroup/active_matcher/blob/docs/LICENSE)
-
 # ActiveMatcher: Matching for Entity Matching
 
 Welcome to ActiveMatcher! ActiveMatcher is a machine learning system specialized for
