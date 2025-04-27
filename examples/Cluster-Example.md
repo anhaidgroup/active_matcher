@@ -2,15 +2,15 @@
 
 This guide is a step-by-step guide to running the active matcher. For this guide, we will assume that you have already installed everything from the [Cloud Based Cluster Guide](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-cloud-based-cluster.md) and created a Spark cluster.
 
-## Step One: Download datasets
+## Step One: Download datasets --- We should change when the datasets are hosted to make it easier using wget
 
-To begin, we need to download the datasets from the GitHub. Navigate to the dblp_acm folder here: https://github.com/anhaidgroup/active_matcher/tree/main/examples/data/dblp_acm. Then, click on 'cand.parquet' and click the download icon at the top. Repeat this for 'gold.parquet', 'table_a.parquet', and 'table_b.parquet'. Now, using your file manager on your computer, move these all into one file called 'dblp_acm'.
+To begin, we need to download the datasets from the GitHub. Navigate to the dblp_acm folder here: https://github.com/anhaidgroup/active_matcher/tree/main/examples/data/dblp_acm. Then, click on 'cand.parquet' and click the download icon at the top. Repeat this for 'gold.parquet', 'table_a.parquet', and 'table_b.parquet'. Now, using your file manager on your computer, move these all into one file called 'dblp_acm'. (if the data is not hosted somewhere, we will need to add instructions about using scp). This should be done on all of the nodes.
 
 ## Step Two: Create Python file
 
-Within the 'dblp_acm' directory, create a file called 'example.py'. We will use this Python file to walkthrough the code.
+On the master node, in the 'dblp_acm' directory, create a file called 'example.py'. We will use this Python file to walkthrough the code.
 
-Note: Make sure your virtual environment is activated. The 'further pointers' section in the installation guide has a reminder of how to do this. Then, to run this file throughout this walkthrough, use your terminal to navigate to the 'dblp_acm' directory and run `python example.py`.
+Note: Make sure your virtual environment is activated. The 'further pointers' section in the installation guide has a reminder of how to do this.
 
 ## Step Three: Import dependencies
 
@@ -40,11 +40,11 @@ simplefilter(action="ignore", category=FutureWarning)
 
 ## Step Four: Initialize Spark
 
-Next we need to initialize Spark, for this example we are just going to run in local mode, however ActiveMatcher can also run on a cluster seemlessly.
+Next we need to initialize Spark and for this example we will run on a cluster.
 
 ```
 spark =  SparkSession.builder\
-                        .master('local[*]')\
+                        .master('{url of Spark Master}')\
                         .config('spark.sql.execution.arrow.pyspark.enabled',  'true')\
                         .getOrCreate()
 
@@ -55,7 +55,7 @@ spark =  SparkSession.builder\
 Once we have the SparkSession initialized, we can read in the raw data along with our candidate set.
 
 ```
-data_dir = Path('./')
+data_dir = Path('/home/ubuntu/dblp_acm')
 A = spark.read.parquet(str(data_dir / 'table_a.parquet'))
 B = spark.read.parquet(str(data_dir / 'table_b.parquet'))
 cand = spark.read.parquet(str(data_dir / 'cand.parquet'))
@@ -156,4 +156,14 @@ f'''
 {f1=}
 '''
 )
+```
+
+## Step Twelve: Running on a Cluster
+
+In order to run this on a cluster, we can use the following command from the root directory (you can always get to the root directory by typing `cd` into the terminal). **Note**: This command assumes that the directory structure is the same as ours, and if you followed our installation guides, it will be the same.
+
+```
+spark/bin/spark-submit \
+  --master {url of Spark Master} \
+  /home/ubuntu/dblp_acm/example.py
 ```
