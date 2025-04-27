@@ -51,7 +51,7 @@ java --version
 
 ### **Step 3: Python Installation**
 
-This section deals with installing Python 3.12, creating a virtual environment, and then installing two Python packages (setuptools and build). Other versions of Python, other environments, or incorrect installations of the setuptools and build packages can cause issues with ActiveMatcher installation.
+This section deals with installing Python 3.12, creating a virtual environment, installing two Python packages (setuptools and build). Other versions of Python, other environments, or incorrect installations of the setuptools and build packages can cause issues with ActiveMatcher installation.
 
 If you suspect that you may have Python downloaded on your machine already, open up your terminal. Then, run the command:
 
@@ -87,7 +87,7 @@ If you did not have the outputs listed above, continue to step 3B. Otherwise, sk
 
 #### **Step 3B: Python Installation**
 
-To Install Python, we will first download Python from Python's website, and then we will install it.
+To Install Python, we will first download Python 3.12 from Python's website, then we will install it, and finally we will make it the default verison.
 Run the following in the terminal to install Python 3.12:
 
 ##### **Step 3B.1: Download Python**
@@ -108,6 +108,12 @@ Run the following in the terminal to install Python 3.12:
     sudo make altinstall
 ```
 
+##### **Step 3B.3: Make Python 3.12 the Default**
+```
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.12 1
+python3.12 -m ensurepip --default-pip
+python3.12 -m pip install --upgrade pip setuptools
+```
 #### **Step 3C: Python Environment Setup**
 
 Now, we will create a Python environment with Python 3.12. This step is necessary to make sure we use the correct version of Python with the correct dependencies. First, we need to install the venv module with the following command:
