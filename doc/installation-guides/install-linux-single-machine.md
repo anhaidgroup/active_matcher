@@ -141,7 +141,7 @@ where x ≥ 0, then the Python environment setup was successful.
 
 #### **Step 3D: Python Package Installation**
 
-We will be downloading two packages: setuptools and build. Before installing, make sure you are in the virtual environment. If you have just finished Step 1C, you are in the virtual environment. Otherwise, to make sure your virtual environment is active, you can run:
+We will be downloading two packages: setuptools and build. Before installing, make sure you are in the virtual environment. If you have just finished Step 3C, you are in the virtual environment. Otherwise, to make sure your virtual environment is active, you can run:
 ```
     source ~/active_matcher/bin/activate
 ```
