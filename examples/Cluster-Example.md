@@ -1,16 +1,19 @@
-# Step-by-step guide to running Active Matcher
+# Step-by-step guide to running ActiveMatcher on a Cloud-Based Cluster
 
-This guide is a step-by-step guide to running the active matcher. For this guide, we will assume that you have already installed everything from the provided installation guides.
+This guide is a step-by-step guide to running the active matcher. For this guide, we will assume that you have already installed everything from the [Cloud Based Cluster Guide](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-cloud-based-cluster.md) and created a Spark cluster.
 
 ## Step One: Download datasets
-To begin, we need to download the datasets from the GitHub. Navigate to the dblp_acm folder here: https://github.com/anhaidgroup/active_matcher/tree/main/examples/data/dblp_acm. Then, click on 'cand.parquet' and click the download icon at the top. Repeat this for 'gold.parquet', 'table_a.parquet', and 'table_b.parquet'. Now, using your file manager on your computer, move these all into one file called 'dblp_acm'. 
+
+To begin, we need to download the datasets from the GitHub. Navigate to the dblp_acm folder here: https://github.com/anhaidgroup/active_matcher/tree/main/examples/data/dblp_acm. Then, click on 'cand.parquet' and click the download icon at the top. Repeat this for 'gold.parquet', 'table_a.parquet', and 'table_b.parquet'. Now, using your file manager on your computer, move these all into one file called 'dblp_acm'.
 
 ## Step Two: Create Python file
-Within the 'dblp_acm' directory, create a file called 'example.py'. We will use this Python file to walkthrough the code. 
 
-Note: Make sure your virtual environment is activated. The 'further pointers' section in the installation guide has a reminder of how to do this. Then, to run this file throughout this walkthrough, use your terminal to navigate to the 'dblp_acm' directory and run ``` python example.py ```. 
+Within the 'dblp_acm' directory, create a file called 'example.py'. We will use this Python file to walkthrough the code.
+
+Note: Make sure your virtual environment is activated. The 'further pointers' section in the installation guide has a reminder of how to do this. Then, to run this file throughout this walkthrough, use your terminal to navigate to the 'dblp_acm' directory and run `python example.py`.
 
 ## Step Three: Import dependencies
+
 Now, we can open up the 'example.py' file. Before we begin, we first need to import all of the necessary packages that we will use.
 
 ```
@@ -36,6 +39,7 @@ simplefilter(action="ignore", category=FutureWarning)
 ```
 
 ## Step Four: Initialize Spark
+
 Next we need to initialize Spark, for this example we are just going to run in local mode, however ActiveMatcher can also run on a cluster seemlessly.
 
 ```
@@ -47,6 +51,7 @@ spark =  SparkSession.builder\
 ```
 
 ## Step Five: Reading in Data
+
 Once we have the SparkSession initialized, we can read in the raw data along with our candidate set.
 
 ```
@@ -67,6 +72,7 @@ labeler = GoldLabeler(gold)
 ```
 
 ## Step Six: Creating a Model
+
 Next we can choose a model to train. In this example we are using XGBClassifier. Notice that we pass the type of model, not a model instance. Additionally, we can pass model specific keyword args as we would when constructing the model normally, in this case we passed,
 
 eval_metric='logloss', objective='binary:logistic', max_depth=6, seed=42
@@ -83,6 +89,7 @@ model = SKLearnModel(XGBClassifier, eval_metric='logloss', objective='binary:log
 ```
 
 ## Step Seven: Selecting Features
+
 With all of that set up, we can now select features that we will use to generate feature vectors for each pair in cand. Here we use the default typical set of features, however extra_features can be set to True which will cause the code to generate significantly more features, and likely improve model accuracy at the cost of increased runtime for feature vector generation and active learning.
 
 ```
@@ -92,6 +99,7 @@ features = selector.select_features(A.drop('_id'), B.drop('_id'))
 ```
 
 ## Step Eight: Generating Feature Vectors
+
 Now that we have selected features, we can generate feature vectors for each pair in cand. First we need to build the features and then we can generate the actual feature vectors.
 
 ```
@@ -102,6 +110,7 @@ fvs = model.prep_fvs(fvs, 'features')
 ```
 
 ## Step Nine: Selecting Seeds
+
 Once we have the feature vectors, we can select seeds for active learning, for this operation we need to score each pair which is positively correlated with being a match. That is the higher the score for the pair the more likely it is to be a match. In this example, we just take the sum of all the components of the feature vector for each pair.
 
 ```
@@ -110,6 +119,7 @@ seeds = select_seeds(fvs, 'score', 50, labeler)
 ```
 
 ## Step Ten: Training the Model with Active Learning
+
 Next we run active learning, for at most 50 iterations with a batch size of 10. This process will then output a trained model.
 
 ```
@@ -118,6 +128,7 @@ trained_model = active_learner.train(fvs, seeds)
 ```
 
 ## Step Eleven: Applying the Trained Model
+
 We can then apply the trained model to the feature vectors, outputting the binary prediction into a fvs['prediction'] and the confidence of the prediction to fvs['condifidence'].
 
 ```
