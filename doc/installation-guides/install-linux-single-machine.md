@@ -110,18 +110,23 @@ Run the following in the terminal to install Python 3.12:
 
 #### **Step 3C: Python Environment Setup**
 
-Now, we will create a Python environment with Python 3.12. This step is necessary to make sure we use the correct version of Python with the correct dependencies. In your terminal, run:
+Now, we will create a Python environment with Python 3.12. This step is necessary to make sure we use the correct version of Python with the correct dependencies. First, we need to install the venv module with the following command:
+```
+	sudo apt install python3-venv
+```
 
+Next, in your terminal, run:
+```
     python -m venv ~/active_matcher
-
+```
 This will create a virtual environment named active_matcher. To activate this environment, run the following:
-
+```
     source ~/active_matcher/bin/activate
-
+```
 To make sure everything is correct, run:
-
+```
     python --version
-
+```
 If the output says
 
 “Python 3.12.x”
@@ -131,21 +136,21 @@ where x ≥ 0, then the Python environment setup was successful.
 #### **Step 3D: Python Package Installation**
 
 We will be downloading two packages: setuptools and build. Before installing, make sure you are in the virtual environment. If you have just finished Step 1C, you are in the virtual environment. Otherwise, to make sure your virtual environment is active, you can run:
-
+```
     source ~/active_matcher/bin/activate
-
+```
 To install setuptools, run:
-
+```
     pip install setuptools
-
+```
 To install build, run:
-
+```
     pip install build
-
+```
 If at any point during the installation you close your terminal, you will need to reactivate your virtual environment by running:
-
+```
     source ~/active_matcher/bin/activate
-
+```
 ### **Step 4: ActiveMatcher Installation**
 
 Now that you have the correct version of Python installed, we can download ActiveMatcher. To download ActiveMatcher, use one of the following options:
@@ -153,9 +158,9 @@ Now that you have the correct version of Python installed, we can download Activ
 #### **Option 1: Pip Installing from PyPI**
 
 You can install ActiveMatcher from PyPI, using the following command:
-
+```
     pip install active_matcher
-
+```
 This command will install ActiveMatcher and all of its dependencies, such as Joblib, mmh3, Numba, Numpy, Numpydoc, Pandas, Py_Stringmatching, PySpark, Scikit-Learn, Scipy, Threadpoolctl, TQDM, and Xgboost.
 
 #### **Option 2: Pip Installing from GitHub**
@@ -163,7 +168,7 @@ This command will install ActiveMatcher and all of its dependencies, such as Job
 Instead of pip installing from PyPI, you may want to pip install ActiveMatcher from its GitHub repo. This happens if you want to install the latest ActiveMatcher version compared to the version on PyPI. For example, the GitHub version may contain bug fixes that the PyPI version does not.
 
 To install ActiveMatcher directly from its GitHub repo, use the following command:
-
+```
     pip install git+https://github.com/anhaidgroup/active_matcher.git@main
-
+```
 Similar to pip installing from PyPI, the above command will install ActiveMatcher and all of its dependencies.
