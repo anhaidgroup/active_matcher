@@ -1,8 +1,8 @@
-# How to Install Activ Matcher on a Linux Machine
+# How to Install Active Matcher on a Linux Machine
 
 This is a step-by-step guide to install ActiveMatcher and its necessary dependencies on a single Linux machine with Ubunutu 22.0.4
 
-he following software versions were installed on the test machine using the steps in this guide: Python 3.10.12. You can try to adapt this guide to other configurations.
+he following software versions were installed on the test machine using the steps in this guide: Python 3.12. You can try to adapt this guide to other configurations.
 
 ### **Step 1: Install Essential Packages**
 
