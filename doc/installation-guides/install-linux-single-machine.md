@@ -112,12 +112,12 @@ Run the following in the terminal to install Python 3.12:
 
 Now, we will create a Python environment with Python 3.12. This step is necessary to make sure we use the correct version of Python with the correct dependencies. First, we need to install the venv module with the following command:
 ```
-	sudo apt install python3-venv
+    sudo apt install python3-venv
 ```
 
 Next, in your terminal, run:
 ```
-    python -m venv ~/active_matcher
+    python3 -m venv ~/active_matcher
 ```
 This will create a virtual environment named active_matcher. To activate this environment, run the following:
 ```
@@ -125,7 +125,7 @@ This will create a virtual environment named active_matcher. To activate this en
 ```
 To make sure everything is correct, run:
 ```
-    python --version
+    python3 --version
 ```
 If the output says
 
