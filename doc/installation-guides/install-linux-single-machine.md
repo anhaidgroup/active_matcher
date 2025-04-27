@@ -56,17 +56,17 @@ This section deals with installing Python 3.12, creating a virtual environment, 
 If you suspect that you may have Python downloaded on your machine already, open up your terminal. Then, run the command:
 
 ```
-	which python
+    which python3
 ```
 
 If the output path says
 
-“/usr/local/bin/python”
+“/usr/local/bin/python3”
 
 run:
 
 ```
-	python --version
+    python3 --version
 ```
 
 If the output of this is
@@ -77,11 +77,11 @@ where x is a number, you can go to Step 3C after completing Step 3A (you do not 
 
 If
 
-which python
+which python3
 
 Or
 
-python --version
+python3 --version
 
 If you did not have the outputs listed above, continue to step 3B. Otherwise, skip to 3C.
 
@@ -159,7 +159,11 @@ If at any point during the installation you close your terminal, you will need t
 ```
 ### **Step 4: ActiveMatcher Installation**
 
-Now that you have the correct version of Python installed, we can download ActiveMatcher. To download ActiveMatcher, use one of the following options:
+Now that you have the correct version of Python installed, we can download ActiveMatcher. Before we complete the download, we should return to the root directory. We can achieve this by running the following command in the terminal:
+```
+    cd
+```
+Now, to download ActiveMatcher, use one of the following options:
 
 #### **Option 1: Pip Installing from PyPI**
 
