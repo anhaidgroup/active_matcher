@@ -1,4 +1,4 @@
-# How to Install Activ Matcher on a Linux Machine
+# How to Install ActiveMatcher on a Linux Machine
 
 This is a step-by-step guide to install ActiveMatcher and its necessary dependencies on a single Linux machine with Ubunutu 22.0.4
 
@@ -156,7 +156,7 @@ You can install ActiveMatcher from PyPI, using the following command:
 
     pip install active_matcher
 
-This command will install Sparkly and all of its dependencies, such as Joblib, mmh3, Numba, Numpy, Numpydoc, Pandas, Py_Stringmatching, PySpark, Scikit-Learn, Scipy, Threadpoolctl, TQDM, and Xgboost.
+This command will install ActiveMatcher and all of its dependencies, such as Joblib, mmh3, Numba, Numpy, Numpydoc, Pandas, Py_Stringmatching, PySpark, Scikit-Learn, Scipy, Threadpoolctl, TQDM, and Xgboost.
 
 #### **Option 2: Pip Installing from GitHub**
 
