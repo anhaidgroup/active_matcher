@@ -1,6 +1,6 @@
 # Step-by-step guide to running ActiveMatcher on a Single Machine
 
-This guide is a step-by-step guide to running the active matcher. For this guide, we will assume that you have already installed everything from the appropriate [Single Machine Installation Guides](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-single-machine.md).
+This guide is a step-by-step guide to running the active matcher. For this guide, we will assume that you have already installed everything from the appropriate [Single Machine Installation Guide](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-single-machine.md).
 
 ## Step One: Download datasets
 
