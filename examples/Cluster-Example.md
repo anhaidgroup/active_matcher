@@ -8,9 +8,7 @@ To begin, we need to download the datasets from the GitHub. Navigate to the dblp
 
 ## Step Two: Create Python file
 
-On the master node, in the 'dblp_acm' directory, create a file called 'example.py'. We will use this Python file to walkthrough the code.
-
-Note: Make sure your virtual environment is activated. The 'further pointers' section in the installation guide has a reminder of how to do this.
+On the master node, in the 'dblp_acm' directory, create a file called 'example.py'. We will use this Python file to write the code.
 
 ## Step Three: Import dependencies
 
