@@ -158,7 +158,9 @@ f'''
 
 ## Step Twelve: Running on a Cluster
 
-In order to run this on a cluster, we can use the following command from the root directory (you can always get to the root directory by typing `cd` into the terminal). **Note**: This command assumes that the directory structure is the same as ours, and if you followed our installation guides, it will be the same.
+In order to run this on a cluster, we can use the following command from the root directory (you can always get to the root directory by typing `cd` into the terminal). 
+
+**Note**: This command assumes that the directory structure is the same as ours, and if you followed our installation guides, it will be the same.
 
 ```
 spark/bin/spark-submit \
