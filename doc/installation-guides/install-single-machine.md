@@ -12,4 +12,4 @@ The installation process consists of the following:
 
 We currently offer the following ways to install ActiveMatcher on a single machine: 
 * [Installing on Linux](./install-linux-single-machine.md)
-* [Installing on MacOS](./install-macOS-single-machine.md)
+* [Installing on MacOS](./install-macos-single-machine.md)
