@@ -8,7 +8,7 @@ To begin, we need to download the datasets from the GitHub. Navigate to the dblp
 
 ## Step Two: Create Python file
 
-Within the 'dblp_acm' directory, create a file called 'example.py'. We will use this Python file to walkthrough the code.
+Within the 'dblp_acm' directory, create a file called 'example.py'. We will use this Python file to write the code.
 
 ## Step Three: Import dependencies
 
