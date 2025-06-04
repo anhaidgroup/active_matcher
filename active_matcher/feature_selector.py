@@ -32,9 +32,7 @@ class FeatureSelector:
     ]
 
     EXTRA_TOKEN_FEATURES = [
-        SIFFeature,
-        OverlapCoeffFeature, 
-        CosineFeature,
+
     ]
 
 

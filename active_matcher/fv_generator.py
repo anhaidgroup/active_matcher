@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from threading import Lock
-
+from time import time
 
 log = get_logger(__name__)
 
@@ -208,6 +208,43 @@ class FVGenerator:
 
         return fvs
 
+    def generate_and_score_fvs(self, pairs):
+
+        log.info('generating features')
+        
+        fvs = self._gen_fvs(pairs)
+
+        log.info('scoring records')
+        positively_correlated = self._get_pos_cor_features()
+
+        fvs = self._score_fvs(fvs, positively_correlated)
+        return fvs
+
+    def _get_pos_cor_features(self):
+        positively_correlated_features = {
+            'exact_match',
+            'needleman_wunch',  # TODO: double check this may be a typo
+            'smith_waterman',
+            'jaccard',
+            'overlap_coeff',
+            'cosine',
+            'monge_elkan_jw',
+            'tf_idf',
+            'sif'
+        }
+        return [1 if any(str(f).startswith(prefix) for prefix in positively_correlated_features) else 0
+                for f in self._features]
+    
+    def _score_fvs(self, fvs, positively_correlated):
+        pos_cor_array = F.array(*[F.lit(x) for x in positively_correlated])
+
+        return (fvs.withColumn("score", F.aggregate(
+            F.zip_with("features", pos_cor_array, 
+                       lambda x, y: F.nanvl(x, F.lit(0.0)) * y),
+                       F.lit(0.0), 
+                       lambda acc, x: acc + x)
+                       )
+                )
 
     def release_resources(self):
         if self._table_a_preproc is not None:
