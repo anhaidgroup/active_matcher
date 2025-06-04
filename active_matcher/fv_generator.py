@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from threading import Lock
-from time import time
 
 log = get_logger(__name__)
 
