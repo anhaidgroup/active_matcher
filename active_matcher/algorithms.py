@@ -4,10 +4,11 @@ from pyspark.sql.window import Window
 import pandas as pd
 from active_matcher.utils import type_check
 from active_matcher.labeler import Labeler
+import logging
 
+log = logging.getLogger(__name__)
 
-
-def down_sample(fvs, percent, score_column, search_id_column='id2', bucket_size=25000):
+def down_sample(fvs, percent, score_column='score', search_id_column='id2', bucket_size=25000):
     """
     down sample fvs by score_column, producing fvs.count() * percent rows
 
@@ -60,7 +61,7 @@ def down_sample(fvs, percent, score_column, search_id_column='id2', bucket_size=
     return fvs
 
 
-def select_seeds(fvs, score_column, nseeds, labeler):
+def select_seeds(fvs, nseeds, labeler, score_column='score'):
     """
     down sample fvs by score_column, producing fvs.count() * percent rows
 
@@ -107,16 +108,31 @@ def select_seeds(fvs, score_column, nseeds, labeler):
     seeds = []
     # iteratively label vectors, attempt to produce a 
     # set 50% positive 50% negative set 
-    for i in range(nseeds):
-        idx, ex = next(maybe_pos) if pos_count <=neg_count else next(maybe_neg)
-        label = labeler(ex['id1'], ex['id2'])
-        if label:
-            pos_count += 1
-        else:
-            neg_count += 1
+    i = 0
+    while pos_count + neg_count < nseeds and i < nseeds * 2:
+        try:
+            idx, ex = next(maybe_pos) if pos_count <= neg_count else next(maybe_neg)
+            label = float(labeler(ex['id1'], ex['id2']))
+            
+            if label == -1.0:  # User requested to stop
+                log.info("User stopped labeling seeds")
+                break
+            elif label == 2.0:  # User marked as unsure
+                log.info("Skipping unsure example")
+                continue
+            elif label == 1.0:  # Positive match
+                pos_count += 1
+            else:  # label == 0.0, Negative match
+                neg_count += 1
 
-        ex['label'] = label
-        seeds.append(ex)
+            ex['label'] = label
+            seeds.append(ex)
+        except StopIteration:
+            log.warning("Ran out of examples before reaching nseeds")
+            break
+        i += 1
+    if not seeds:
+        raise RuntimeError("No seeds were labeled before stopping")
 
-
+    log.info(f'seeds: pos_count = {pos_count} neg_count = {neg_count}')
     return pd.DataFrame(seeds)

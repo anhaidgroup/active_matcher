@@ -126,7 +126,9 @@ class EntropyActiveLearner:
                 raise RuntimeError('both postive and negative vectors are required for training')
 
             log.info(f'max iter = {max_itr}')
-            for i in range(max_itr):
+            i = 0
+            label = None
+            while i < max_itr and label != -1:
                 log.info(f'starting iteration {i}')
                 # train model
                 log.info('training model')
@@ -148,7 +150,19 @@ class EntropyActiveLearner:
 
                 training_fvs.unpersist()
 
-                new_labeled_batch['label'] = new_labeled_batch[['id1', 'id2']].apply(lambda x: float(self._labeler(*x.values)), axis=1)
+                labels = []
+                labeled_indices = []
+                for idx, row in new_labeled_batch.iterrows():
+                    label = float(self._labeler(row['id1'], row['id2']))
+                    if label == -1.0:
+                        break
+                    labels.append(label)
+                    labeled_indices.append(idx)
+                
+                # Only keep the rows that were actually labeled as match or non-match
+                new_labeled_batch = new_labeled_batch.loc[labeled_indices].copy()
+                new_labeled_batch['label'] = labels
+                new_labeled_batch = new_labeled_batch[(new_labeled_batch['label'] == 0.0) | (new_labeled_batch['label'] == 1.0)]
                 new_labeled_batch['labeled_in_iteration'] = i
 
                 pos, neg = self._get_pos_negative(new_labeled_batch)
@@ -161,6 +175,10 @@ class EntropyActiveLearner:
                 if n_fvs <= len(self.local_training_fvs_):
                     log.info('all fvs labeled, terminating active learning')
                     break
+                if user_stopped:
+                    log.info('user stopped labeling, terminating active learning')
+                    break
+                i += 1
 
 
             training_fvs = spark.createDataFrame(self.local_training_fvs_)
