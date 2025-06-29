@@ -152,9 +152,11 @@ class EntropyActiveLearner:
 
                 labels = []
                 labeled_indices = []
+                user_stopped = False
                 for idx, row in new_labeled_batch.iterrows():
                     label = float(self._labeler(row['id1'], row['id2']))
                     if label == -1.0:
+                        user_stopped = True
                         break
                     labels.append(label)
                     labeled_indices.append(idx)
