@@ -1,6 +1,6 @@
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
-from active_matcher.utils import  get_logger, repartition_df
+from active_matcher.utils import get_logger, repartition_df
 import pickle
 from active_matcher.storage import MemmapDataFrame
 from active_matcher.feature_selector import FeatureSelector
@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from threading import Lock
+import time
 
 log = get_logger(__name__)
 
@@ -173,6 +174,9 @@ class FVGenerator:
         return df
     
     def build(self, A, B=None):
+        start_time = time.time()
+        log.info(f'building {len(self._features)} features')
+        
         A = self._prepreprocess_table(A).persist()
             
         if B is not None:
@@ -198,18 +202,24 @@ class FVGenerator:
         if B is not None:
             B.unpersist()
         
+        elapsed_time = time.time() - start_time
+        log.info(f'Built {len(self._features)} features in {elapsed_time:.2f}s')
+        
 
     def generate_fvs(self, pairs):
-
-        log.info('generating features')
+        start_time = time.time()
+        log.info(f'generating features for {len(self._features)} features')
         
         fvs = self._gen_fvs(pairs)
-
+        
+        elapsed_time = time.time() - start_time
+        log.info(f'Generated feature vectors in {elapsed_time:.2f}s')
+        
         return fvs
 
     def generate_and_score_fvs(self, pairs):
-
-        log.info('generating features')
+        start_time = time.time()
+        log.info(f'generating and scoring features for {len(self._features)} features')
         
         fvs = self._gen_fvs(pairs)
 
@@ -217,6 +227,10 @@ class FVGenerator:
         positively_correlated = self._get_pos_cor_features()
 
         fvs = self._score_fvs(fvs, positively_correlated)
+        
+        elapsed_time = time.time() - start_time
+        log.info(f'Generated and scored feature vectors in {elapsed_time:.2f}s')
+        
         return fvs
 
     def _get_pos_cor_features(self):

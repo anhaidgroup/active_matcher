@@ -49,7 +49,7 @@ class MLModel(ABC):
 
     def prep_fvs(self, fvs, feature_col='features'):
         if self.nan_fill is not None:
-            fvs = fvs.withColumn(feature_col, F.transform(feature_col, lambda x : F.when(x.isNotNull() & ~F.isnan(x), x).otherwise(self._model.nan_fill)))
+            fvs = fvs.withColumn(feature_col, F.transform(feature_col, lambda x : F.when(x.isNotNull() & ~F.isnan(x), x).otherwise(self.nan_fill)))
 
         if self.use_vectors:
             fvs = convert_to_vector(fvs, feature_col)
