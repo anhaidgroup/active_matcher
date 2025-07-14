@@ -160,7 +160,10 @@ class RelDiffFeature(Feature):
 
         vals = floats.values.astype(np.float32)
 
-        return pd.Series(np.abs(vals - f) / np.maximum(np.abs(vals), np.abs(f)), index=floats.index).astype(np.float64)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            result = np.abs(vals - f) / np.maximum(np.abs(vals), np.abs(f))
+        
+        return pd.Series(result, index=floats.index).astype(np.float64)
 
     def __str__(self):
         return f'rel_diff({self.a_attr}, {self.b_attr})'
