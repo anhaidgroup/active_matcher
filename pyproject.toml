@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling", "hatch-requirements-txt"]
+build-backend = "hatchling.build"
+
+[project]
+name = "active_matcher"
+version = "0.1.0"
+dynamic = ["dependencies"]
+
+requires-python = ">= 3.8"
+
+authors = [
+	{name = "Derek Paulsen", email = "derekpaulsensi@gmail.com"},
+]
+
+description = "Active Matcher has been developed to match entities with Spark. It can use active learning to generate training data on the fly, or use custom models"
+
+readme = "README.md"
+license = {file = "LICENSE"}
+
+keywords = ["entity matching", "entity resolution", "matching", "Spark", "distributed", "Active Learning", "Machine Learning"]
+
+classifiers = [
+  # How mature is this project? Common values are
+  #   3 - Alpha
+  #   4 - Beta
+  #   5 - Production/Stable
+  "Development Status :: 4 - Beta",
+
+  # Indicate who your project is intended for
+  "Intended Audience :: Developers",
+
+  # Pick your license as you wish (see also "license" above)
+  "License :: OSI Approved :: Apache Software License",
+
+  # Specify the Python versions you support here.
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+]
+
+Homepage = "https://github.com/anhaidgroup/active_matcher"
+Repository = "https://github.com/anhaidgroup/active_matcher.git"
+Issues = "https://github.com/anhaidgroup/active_matcher/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["active_matcher"]
+
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt"]
