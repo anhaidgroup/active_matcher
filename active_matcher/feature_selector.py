@@ -5,7 +5,7 @@ import pyspark.sql.functions as F
 import pyspark.sql.types as T
 import pandas as pd
 from active_matcher.utils import get_logger, repartition_df, type_check
-
+from time import time
 log = get_logger(__name__)
 
 class FeatureSelector:
@@ -32,9 +32,7 @@ class FeatureSelector:
     ]
 
     EXTRA_TOKEN_FEATURES = [
-        SIFFeature,
-        OverlapCoeffFeature, 
-        CosineFeature,
+
     ]
 
 

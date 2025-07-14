@@ -23,7 +23,7 @@ log = get_logger(__name__)
     
 class ContinuousEntropyActiveLearner:    
     
-    def __init__(self, model, labeler, queue_size=50, max_labeled=500):    
+    def __init__(self, model, labeler, queue_size=50, max_labeled=100000, on_demand_stop=True):    
         """
 
         Parameters
@@ -38,21 +38,25 @@ class ContinuousEntropyActiveLearner:
             the number of examples to queue during active learning
 
         max_labeled : int 
-            the maximum number of examples that will be labeled
+            the maximum number of examples that will be labeled, only necessary if on_demand_stop is False
+
+        on_demand_stop : bool
+            if True, the active learning will stop when the user stops labeling
 
         """
 
-        self._check_init_args(model, labeler, queue_size, max_labeled)
+        self._check_init_args(model, labeler, queue_size, max_labeled, on_demand_stop)
 
         self._queue_size = queue_size
         self._max_labeled = max_labeled
+        self._on_demand_stop = on_demand_stop
         self._min_batch_size = 3
         self._labeler = labeler
         self._model = copy(model)
         self.local_training_fvs_ = None
         self._terminate_if_label_everything = False
     
-    def _check_init_args(self, model, labeler, queue_size, max_labeled):
+    def _check_init_args(self, model, labeler, queue_size, max_labeled, on_demand_stop):
 
         type_check(model, 'model', MLModel)
         type_check(labeler, 'labeler', Labeler)
@@ -62,7 +66,8 @@ class ContinuousEntropyActiveLearner:
             raise ValueError('queue_size must be > 0')
         if max_labeled <= 0 :
             raise ValueError('max_labeled must be > 0')
-    
+        type_check(on_demand_stop, 'on_demand_stop', bool)
+
     def _select_training_vectors(self, fvs, ids):
         return fvs.filter(F.col('_id').isin(ids))
 
@@ -113,19 +118,28 @@ class ContinuousEntropyActiveLearner:
         training_thread.start()
         # run labeler in main thread
         nlabeled = len(seeds)
-        log.info('running training')
-        with tqdm(total=self._max_labeled - len(seeds)) as prog_bar:
-            while nlabeled < self._max_labeled:
-                try:
-                    example = to_be_label_queue.get(timeout=10).item
-                except Empty:
-                    if not training_thread.is_alive():
-                        raise RuntimeError('label queue is empty by training thread is dead, likely due to an exception during training')
-                else:
-                    # example gotten, label and send back to training thread
-                    example['label'] = float(self._labeler(example['id1'], example['id2']))
+        #log.info('running training')
+        terminate = False
+        pos, neg = self._get_pos_negative(seeds.dropna(subset=['label']))
+        # if on_demand_stop is True, the active learning will stop when the user stops labeling
+        # if on_demand_stop is False, the active learning will run until the max_labeled examples are labeled
+        while (not terminate and self._on_demand_stop) or (nlabeled < self._max_labeled and not self._on_demand_stop):
+            try:
+                example = to_be_label_queue.get(timeout=10).item
+            except Empty:
+                if not training_thread.is_alive():
+                    raise RuntimeError('label queue is empty by training thread is dead, likely due to an exception during training')
+            else:
+                # example gotten, label and send back to training thread
+                example['label'] = float(self._labeler(example['id1'], example['id2']))
+                if example['label'] == -1.0:
+                    log.info('user stopped labeling, terminating active learning')
+                    terminate = True
+                elif example['label'] != 2.0:
                     labeled_queue.put(example)
-                    prog_bar.update(1)
+                    pos += 1 if example['label'] == 1.0 else 0
+                    neg += 1 if example['label'] == 0.0 else 0
+                    log.info(f'total positive = {pos} negative = {neg}')
                     nlabeled += 1
         # signal training thread to stop and wait for termination
         stop_training.set()
@@ -136,14 +150,14 @@ class ContinuousEntropyActiveLearner:
 
     def _training_loop(self, to_be_label_queue, labeled_queue, stop_event, fvs, seeds):
         try:
-            spark = SparkSession.builder.getOrCreate()
+            spark = SparkSession.builder.config("spark.ui.showConsoleProgress", "false").getOrCreate()
 
             fvs = self._prep_fvs(fvs)
 
             with persisted(fvs) as fvs:
                 n_fvs = fvs.count()
                 # just label everything and return 
-                if n_fvs <= len(seeds) + self._max_labeled:
+                if n_fvs <= len(seeds) + self._max_labeled and not self._on_demand_stop:
                     if self._terminate_if_label_everything:
                         log.info('running al to completion would label everything, labeling all fvs and returning')
                         return self._label_everything(fvs)
@@ -165,9 +179,14 @@ class ContinuousEntropyActiveLearner:
                 i = -1
                 while not stop_event.is_set():
                     i += 1
-                    # wait for more stuff to be labeled
-                    while self._queue_size - to_be_label_queue.qsize() < self._min_batch_size:
+                    # wait for more stuff to be labeled, but check stop event
+                    while (self._queue_size - to_be_label_queue.qsize() < self._min_batch_size 
+                           and not stop_event.is_set()):
                         time.sleep(1)
+                    
+                    # If stop event is set, break out of the main loop
+                    if stop_event.is_set():
+                        break
                     
                     # get new labeled examples
                     new_examples = []
@@ -182,7 +201,7 @@ class ContinuousEntropyActiveLearner:
                         self.local_training_fvs_.loc[df.index, 'labeled_in_iteration'] = df['labeled_in_iteration']
                     
                     # train model
-                    log.info('training model')
+                    #log.info('training model')
                     training_fvs = spark.createDataFrame(self.local_training_fvs_, schema=schema)\
                                         .repartition(len(self.local_training_fvs_) // 100 + 1, '_id')\
                                         .persist()
@@ -194,7 +213,7 @@ class ContinuousEntropyActiveLearner:
                     )
 
                     cand_fvs = fvs.join(training_fvs, on='_id', how='left_anti')
-                    log.info('selecting and labeling new examples')
+                    #log.info('selecting and labeling new examples')
                     # number of examples to replenish in the queue
                     batch_size = self._queue_size - to_be_label_queue.qsize()
                     # get next labeled batch
@@ -215,9 +234,9 @@ class ContinuousEntropyActiveLearner:
                         ent = r.pop('entropy')
                         to_be_label_queue.put(PQueueItem(ent, r))
 
-                    total_pos, total_neg = self._get_pos_negative(self.local_training_fvs_.dropna(subset=['label']))
+                    #total_pos, total_neg = self._get_pos_negative(self.local_training_fvs_.dropna(subset=['label']))
 
-                    log.info(f'total positive = {total_pos} negative = {total_neg}')
+                    #log.info(f'total positive = {total_pos} negative = {total_neg}')
                     
                     if n_fvs <= len(self.local_training_fvs_):
                         log.info('all fvs labeled, terminating active learning')
