@@ -69,7 +69,7 @@ gold = set(zip(gold_df.id1, gold_df.id2))
 labeler = GoldLabeler(gold)
 ```
 
-However, if you would like to label the data with a Command-line interface because you do not already have a gold dataset, we provide a class called CLILabeler. Here is an example for how you would use the CLILabeler rather than the GoldLabeler:
+Additionally, if you would like to label the data with a Command-line interface because you do not already have a gold dataset, we provide a class called CLILabeler. Here is an example for how you would use the CLILabeler rather than the GoldLabeler:
 
 ```
 from active_matcher.labeler import CLILabeler
