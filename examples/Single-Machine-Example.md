@@ -61,13 +61,23 @@ cand = spark.read.parquet(str(data_dir / 'cand.parquet'))
 
 Our candidate set is a set of rolled up pairs, where cand['id2'] refers to the B['_id'] of the record in table B and the ids in cand['id1_list'] refer to the records in table A with ids A['_id']. We use this format for improving effeciency of generating feature vectors, especially when cand is produced by a top-k blocking algorithm.
 
-Next we can create a labeler, for this example, we use gold data to create an automatic labeler, however the Labeler class can be subclassed to add a human in the loop.
+Next we can create a labeler, for this example, we use gold data to create an automatic labeler, however the Labeler class can be subclassed to add a human in the loop. 
 
 ```
 gold_df = pd.read_parquet(data_dir / 'gold.parquet')
 gold = set(zip(gold_df.id1, gold_df.id2))
 labeler = GoldLabeler(gold)
 ```
+
+However, if you would like to label the data with a Command-line interface because you do not already have a gold dataset, we provide a class called CLILabeler. Here is an example for how you would use the CLILabeler rather than the GoldLabeler:
+
+```
+from active_matcher.labeler import CLILabeler
+
+labeler = CLILabeler(a_df=A, b_df=B, id_col:'_id')
+```
+
+where id_col is the name of the id column in your data. 
 
 ## Step Six: Creating a Model
 
