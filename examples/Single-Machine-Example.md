@@ -1,16 +1,16 @@
-# Step-by-step guide to running ActiveMatcher on a Single Machine
+## Running ActiveMatcher on a Single Machine
 
 This guide is a step-by-step guide to running the active matcher. For this guide, we will assume that you have already installed everything from the appropriate [Single Machine Installation Guide](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-single-machine.md).
 
-## Step One: Download datasets
+### Step 1: Downloading the Datasets
 
 To begin, we need to download the datasets from the GitHub. Navigate to the dblp_acm folder here: https://github.com/anhaidgroup/active_matcher/tree/main/examples/data/dblp_acm. Then, click on 'cand.parquet' and click the download icon at the top. Repeat this for 'gold.parquet', 'table_a.parquet', and 'table_b.parquet'. Now, using your file manager on your computer, move these all into one folder called 'dblp_acm'.
 
-## Step Two: Create Python file
+### Step 2: Creating a Python File
 
 Within the 'dblp_acm' directory, create a file called 'example.py'. We will use this Python file to write the code.
 
-## Step Three: Import dependencies
+### Step 3: Importing Dependencies
 
 Now, we can open up the 'example.py' file. Before we begin, we first need to import all of the necessary packages that we will use.
 
@@ -36,7 +36,7 @@ simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 simplefilter(action="ignore", category=FutureWarning)
 ```
 
-## Step Four: Initialize Spark
+### Step 4: Initializing Spark
 
 Next we need to initialize Spark, for this example we are just going to run in local mode, however ActiveMatcher can also run on a cluster seemlessly.
 
@@ -48,7 +48,7 @@ spark =  SparkSession.builder\
 
 ```
 
-## Step Five: Reading in Data
+### Step 5: Reading the Data
 
 Once we have the SparkSession initialized, we can read in the raw data along with our candidate set.
 
@@ -69,7 +69,7 @@ gold = set(zip(gold_df.id1, gold_df.id2))
 labeler = GoldLabeler(gold)
 ```
 
-## Step Six: Creating a Model
+### Step 6: Creating an Machine Learning Model to Serve as the Matcher
 
 Next we can choose a model to train. In this example we are using XGBClassifier. Notice that we pass the type of model, not a model instance. Additionally, we can pass model specific keyword args as we would when constructing the model normally, in this case we passed,
 
@@ -86,7 +86,7 @@ Second, many algorithms use multiple threads for training and inference. Since t
 model = SKLearnModel(XGBClassifier, eval_metric='logloss', objective='binary:logistic', max_depth=6, seed=42)
 ```
 
-## Step Seven: Selecting Features
+### Step 7: Creating the Features
 
 With all of that set up, we can now select features that we will use to generate feature vectors for each pair in cand. Here we use the default typical set of features, however extra_features can be set to True which will cause the code to generate significantly more features, and likely improve model accuracy at the cost of increased runtime for feature vector generation and active learning.
 
@@ -96,7 +96,7 @@ selector = FeatureSelector(extra_features=False)
 features = selector.select_features(A.drop('_id'), B.drop('_id'))
 ```
 
-## Step Eight: Generating Feature Vectors
+### Step 8: Creating the Feature Vectors
 
 Now that we have selected features, we can generate feature vectors for each pair in cand. First we need to build the features and then we can generate the actual feature vectors.
 
@@ -107,7 +107,7 @@ fvs = fv_gen.generate_fvs(cand)
 fvs = model.prep_fvs(fvs, 'features')
 ```
 
-## Step Nine: Selecting Seeds
+### Step 9: Selecting the Seeds
 
 Once we have the feature vectors, we can select seeds for active learning, for this operation we need to score each pair which is positively correlated with being a match. That is the higher the score for the pair the more likely it is to be a match. In this example, we just take the sum of all the components of the feature vector for each pair.
 
@@ -116,7 +116,7 @@ fvs = fvs.withColumn('score', F.aggregate('features', F.lit(0.0), lambda acc, x 
 seeds = select_seeds(fvs, 'score', 50, labeler)
 ```
 
-## Step Ten: Training the Model with Active Learning
+### Step 10: Training the Model with Active Learning
 
 Next we run active learning, for at most 50 iterations with a batch size of 10. This process will then output a trained model.
 
@@ -125,7 +125,7 @@ active_learner = EntropyActiveLearner(model, labeler, batch_size=10, max_iter=50
 trained_model = active_learner.train(fvs, seeds)
 ```
 
-## Step Eleven: Applying the Trained Model
+### Step 11: Applying the Trained Model
 
 We can then apply the trained model to the feature vectors, outputting the binary prediction into a fvs['prediction'] and the confidence of the prediction to fvs['condifidence'].
 
