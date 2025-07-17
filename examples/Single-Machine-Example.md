@@ -71,10 +71,10 @@ labeler = GoldLabeler(gold)
 
 ## Step Six: Creating a Model
 
-Next we can choose a model to train. In this example we are using XGBClassifier. Notice that we pass the type of model, not a model instance. Additionally, we can pass model specific keyword args as we would when constructing the model normally, in this case we passed,
+Next we can choose a model to train. In this example we are using XGBClassifier, which exposes an SKLearn model interface. To read about SKLearn model options, please visit their documentation [here](https://scikit-learn.org/stable/supervised_learning.html). To read about SparkML model options, please visit their documentation [here](https://spark.apache.org/docs/latest/ml-classification-regression.html). As noted above, XGBClassifier exposes an SKLearn model interface, but it is not included in the SKLearn package. To read about the XGBoost model, please visit their documentation [here](https://xgboost.readthedocs.io/en/stable/index.html). Notice that we pass the type of model, not a model instance. Additionally, we can pass model specific keyword args as we would when constructing the model normally, in this case we passed,
 
 eval_metric='logloss', objective='binary:logistic', max_depth=6, seed=42
-Note that while we use XGBClassifier in this example, most any model that exposes a scikit-learn interface should work with two important caveats.
+Note that while we use XGBClassifier in this example, most any model that exposes an SKLearn or SparkML model interface should work. For models which expose an SKLearn interface, their are two important caveats.
 
 Model Training and Inference Time
 First, for each iteration in active learning, requries training a new model and then applying the model to each feature vector we are doing active learning on. This means that if model training and/or inference are slow, the active learning process will be very slow.
