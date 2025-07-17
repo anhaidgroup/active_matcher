@@ -5,11 +5,11 @@ entity matching built on top of Apache Spark.
 
 ### Installation
 
-See instructions to install ActiveMatcher on [a single machine](https://github.com/anhaidgroup/active_matcher/tree/docs/doc/installation-guides)  or [a cloud-based cluster](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-cloud-based-cluster.md). 
+See instructions to install ActiveMatcher on [a single machine](https://github.com/anhaidgroup/active_matcher/tree/main/doc/installation-guides)  or [a cloud-based cluster](https://github.com/anhaidgroup/active_matcher/blob/main/doc/installation-guides/install-cloud-based-cluster.md). 
 
 ### How to Use
 
-See examples on using ActiveMatcher on a [single machine](https://github.com/anhaidgroup/active_matcher/blob/docs/examples/Single-Machine-Example.md) and a [cluster of machines](https://github.com/anhaidgroup/active_matcher/blob/docs/examples/Cluster-Example.md). 
+See examples on using ActiveMatcher on a [single machine](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md) and a [cluster of machines](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Cluster-Example.md). 
 
 ### Further Pointers
 
