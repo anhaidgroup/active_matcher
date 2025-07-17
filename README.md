@@ -9,7 +9,7 @@ See instructions to install ActiveMatcher on [a single machine](https://github.c
 
 ### How to Use
 
-See examples on [using ActiveMatcher on a single machine](https://github.com/anhaidgroup/active_matcher/blob/docs/examples/Single-Machine-Example.md) and a [cluster](https://github.com/anhaidgroup/active_matcher/blob/docs/examples/Cluster-Example.md). 
+See examples on using ActiveMatcher on a [single machine](https://github.com/anhaidgroup/active_matcher/blob/docs/examples/Single-Machine-Example.md) and a [cluster of machines](https://github.com/anhaidgroup/active_matcher/blob/docs/examples/Cluster-Example.md). 
 
 ### Further Pointers
 
