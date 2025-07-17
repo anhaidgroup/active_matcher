@@ -166,7 +166,7 @@ f'''
 )
 ```
 
-### Step Twelve: Running the Python Program
+## Step Twelve: Running the Python Program
 
 Congratulations. You have finished writing a Python program for matching with ActiveMatcher, and now you can run the program. To do so, open a terminal and navigate to the directory that you wrote your 'example.py' file in. Finally, run the following command, and once the program is finished, it will output true_positives, 'precision', 'recall', and 'f1':
 
