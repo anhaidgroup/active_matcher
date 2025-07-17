@@ -30,7 +30,7 @@ You will need to create at least two EC2 instances to serve as nodes in your clu
 
 ### Installing ActiveMatcher
 
-You can find instructions for installing ActiveMatcher and its prerequisites (Python, Java, Joblib, mmh3, Numba, Numpy, Numpydoc, Pandas, Py_Stringmatching, PySpark, Scikit-Learn, Scipy, Threadpoolctl, TQDM, and Xgboost) here: [ActiveMatcher Linux Installation](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-linux-single-machine.md)
+You can find instructions for installing ActiveMatcher and its prerequisites (Python, Java, Joblib, mmh3, Numba, Numpy, Numpydoc, Pandas, Py_Stringmatching, PySpark, Scikit-Learn, Scipy, Threadpoolctl, TQDM, and Xgboost) here: [ActiveMatcher Linux Installation](https://github.com/anhaidgroup/active_matcher/blob/main/doc/installation-guides/install-linux-single-machine.md)
 
 You will have to install ActiveMatcher and its prerequisites on every node in your cluster.
 
