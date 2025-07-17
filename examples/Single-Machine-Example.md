@@ -113,7 +113,7 @@ Once we have the feature vectors, we can select seeds for active learning, for t
 
 ```
 fvs = fvs.withColumn('score', F.aggregate('features', F.lit(0.0), lambda acc, x : acc + F.when(x.isNotNull() & ~F.isnan(x), x).otherwise(0.0) ))
-seeds = select_seeds(fvs, 'score', 50, labeler)
+seeds = select_seeds(fvs, 50, labeler, 'score')
 ```
 
 ## Step Ten: Training the Model with Active Learning
