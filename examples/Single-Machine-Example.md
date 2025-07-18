@@ -103,7 +103,7 @@ eval_metric='logloss', objective='binary:logistic', max_depth=6, seed=42
 Additionally, we want to provide two important notes for the model process:
 
 ### Model Training and Inference Time
-First, for each iteration in active learning, requries training a new model and then applying the model to each feature vector we are doing active learning on. This means that if model training and/or inference are slow, the active learning process will be very slow.
+First, each iteration in active learning requries training a new model and then applying the model to each feature vector we are doing active learning on. This means that if model training and/or inference are slow, the active learning process will be very slow.
 
 ### Model Threading
 Second, many algorithms use multiple threads for training and inference. Since training takes place on the Spark driver node, it is okay if model training with multiple threads. 
