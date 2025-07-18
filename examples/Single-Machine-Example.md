@@ -59,6 +59,8 @@ B = spark.read.parquet(str(data_dir / 'table_b.parquet'))
 cand = spark.read.parquet(str(data_dir / 'cand.parquet'))
 ```
 
+Notably, A and B both have the same schema. ActiveMatcher requires that the datasets which are being matched have the same schema. Additionaly, ActiveMatcher requires that both A and B have an id column. An id column is a column where all of the values are unique integers. Since A and B are required to have the same schema, the id column in both needs to have the same name as well. In this case, the id columns in A and B are both named '_id'.
+
 Our candidate set is a set of rolled up pairs, where cand['id2'] refers to the B['_id'] of the record in table B and the ids in cand['id1_list'] refer to the records in table A with ids A['_id']. We use this format for improving effeciency of generating feature vectors, especially when cand is produced by a top-k blocking algorithm.
 
 Next we can create a labeler, for this example, we use gold data to create an automatic labeler, however the Labeler class can be subclassed to add a human in the loop. 
@@ -69,7 +71,7 @@ gold = set(zip(gold_df.id1, gold_df.id2))
 labeler = GoldLabeler(gold)
 ```
 
-Additionally, if you would like to label the data with a Command-line interface because you do not already have a gold dataset, we provide a class called CLILabeler. Here is an example for how you would use the CLILabeler rather than the GoldLabeler:
+Additionally, if you would like to label the data with a command-line interface because you do not already have a gold dataset, we provide a class called CLILabeler. Here is an example for how you would use the CLILabeler rather than the GoldLabeler:
 
 ```
 from active_matcher.labeler import CLILabeler
@@ -79,18 +81,27 @@ labeler = CLILabeler(a_df=A, b_df=B, id_col:'_id')
 
 where id_col is the name of the id column in your data. 
 
+There are two steps where ActiveMatcher requires the user to label data if a simulated (GoldLabeler) is not being used. The first is when seeds are being selected and the second is during the Active Learning process. In either of these cases, using the CLILabeler will provide an interactive labeler using the command-line. Within the command-line, the user will see two records side-by-side. They will be asked if the records match, and will be prompted to input 'y' if they do match, 'n' if they do not match, and 'u' if they are unsure. 
+
 ## Step Six: Creating a Model
 
 Next we can choose a model to train. In this example we are using XGBClassifier, which exposes an SKLearn model interface. To read about SKLearn model options, please visit their documentation [here](https://scikit-learn.org/stable/supervised_learning.html). To read about SparkML model options, please visit their documentation [here](https://spark.apache.org/docs/latest/ml-classification-regression.html). As noted above, XGBClassifier exposes an SKLearn model interface, but it is not included in the SKLearn package. To read about the XGBoost model, please visit their documentation [here](https://xgboost.readthedocs.io/en/stable/index.html). Notice that we pass the type of model, not a model instance. Additionally, we can pass model specific keyword args as we would when constructing the model normally, in this case we passed,
-
+```
 eval_metric='logloss', objective='binary:logistic', max_depth=6, seed=42
-Note that while we use XGBClassifier in this example, most any model that exposes an SKLearn or SparkML model interface should work. For models which expose an SKLearn interface, their are two important caveats.
+```
+Note that while we use XGBClassifier in this example, most any model that exposes an SKLearn or SparkML model interface should work. There are two important notes for the model process:
 
 ### Model Training and Inference Time
 First, for each iteration in active learning, requries training a new model and then applying the model to each feature vector we are doing active learning on. This means that if model training and/or inference are slow, the active learning process will be very slow.
 
 ### Model Threading
-Second, many algorithms use multiple threads for training and inference. Since training takes place on the spark driver node, it is okay if model training with multiple threads. However, the inference process is distributed across workers which each have tasks that run on threads. Then, the sklearn model also tries to use multiple threads. This can cause more threads to be running than CPU cores availabe. Therefore, for inference the model should not use multiple threads as it will cause significant over subscription of the processor and lead to extremely slow model inference times (including during active learning). Fortunately, sklearn provides an easy way to disable threading using threadpoolctl, SKLearnModel automatically disables threading for inference using threadpoolctl meaning that sklearn models shouldn't require any modification and can be passed to SKLearnModel unchanged. If you are interested in reading more about oversubscription with sklearn, please check out their documentation [here](https://scikit-learn.org/stable/computing/parallelism.html#oversubscription-spawning-too-many-threads).
+Second, many algorithms use multiple threads for training and inference. Since training takes place on the Spark driver node, it is okay if model training with multiple threads. 
+
+However, the inference process is distributed across workers which each have tasks that run on threads. Then, the sklearn model also tries to use multiple threads. This can cause more threads to be running than CPU cores availabe. Therefore, for inference the model should not use multiple threads as it will cause significant over subscription of the processor and lead to extremely slow model inference times (including during active learning). 
+
+Fortunately, sklearn provides an easy way to disable threading using threadpoolctl, SKLearnModel automatically disables threading for inference using threadpoolctl meaning that sklearn models shouldn't require any modification and can be passed to SKLearnModel unchanged. If you are interested in reading more about oversubscription with sklearn, please check out their documentation [here](https://scikit-learn.org/stable/computing/parallelism.html#oversubscription-spawning-too-many-threads).
+
+The model threading issue discussed above is specific to sklearn models and does not affect to SparkML models.
 
 ```
 model = SKLearnModel(XGBClassifier, eval_metric='logloss', objective='binary:logistic', max_depth=6, seed=42)
@@ -111,10 +122,10 @@ features = selector.select_features(A.drop('_id'), B.drop('_id'))
 Now that we have selected features, we can generate feature vectors for each pair in cand. First we need to build the features and then we can generate the actual feature vectors.
 
 ```
-fv_gen = FVGenerator(features)
-fv_gen.build(A, B)
-fvs = fv_gen.generate_fvs(cand)
-fvs = model.prep_fvs(fvs, 'features')
+fv_gen = FVGenerator(features) # This creates an FVGenerator object with the features selected in Step Seven.
+fv_gen.build(A, B) # This creates a binary representation of the DataFrame and stores it on disk. This is a memory optimization to avoid the large dataframes being stored in memory.
+fvs = fv_gen.generate_fvs(cand) # generate_fvs creates feature vectors between records that are candidates in the cand dataset.
+fvs = model.prep_fvs(fvs, 'features') # This ensures that fvs is the correct datatype, fills in NaN values correctly, and saves the fvs in a column called 'features'.
 ```
 
 ## Step Nine: Selecting Seeds
