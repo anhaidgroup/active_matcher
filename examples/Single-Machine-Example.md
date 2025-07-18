@@ -137,14 +137,14 @@ fvs = model.prep_fvs(fvs, 'features') # This ensures that fvs is the correct dat
 
 ## Step Nine: Scoring the Feature Vectors
 
-Once we have the feature vectors we need to score each pair such that the higher the score a pair recieves, the more likely it is to be a match. In this example, we just take the sum of all the components of the feature vector for each pair. This step is important for the optional down sampling and for selecting seeds. The score here serves as a heuristic to evaluate if a pair is likely a match or likely a non-match.
+Once we have the feature vectors, we need to score each pair such that the higher the score a pair recieves, the more likely it is to be a match. In this example, we just take the sum of all the components of the feature vector for each pair. This step is important for the optional down sampling and for selecting seeds. The score serves as a heuristic to evaluate if a pair is likely a match or likely a non-match.
 
 ```
 fvs = fvs.withColumn('score', F.aggregate('features', F.lit(0.0), lambda acc, x : acc + F.when(x.isNotNull() & ~F.isnan(x), x).otherwise(0.0) ))
 ```
 
-## Optional Step: Down sampling
-In some cases where the number of records is very large (over one million), it can be beneficial to take a sample of the data. ActiveMatcher provides a method to strategically choose data for the sample. In many cases of matching, the number of non-matches will significantly outweigh the number of matches. Thus, random sampling could lead to a skewed sample of non-matches. Therefore, ActiveMatcher uses a heuristic to ensure the sample contains both non-matches and matches. Here is an example of how to use the down sampling method:
+## Optional Step: Downsampling
+In some cases where the number of records is very large (over one million), it can be beneficial to take a sample of the data for model training. In many cases of matching, the number of non-matches will significantly outweigh the number of matches. Thus, random sampling could lead to a skewed sample of non-matches.  ActiveMatcher provides a method which uses a heuristic to ensure the sample contains both non-matches and matches. Here is an example of how to use the down sampling method:
 
 ```
 from active_matcher.algorithms import down_sample
@@ -152,11 +152,11 @@ from active_matcher.algorithms import down_sample
 sampled_fvs = down_sample(fvs, percent = .1, score_column= 'score')
 ```
 
-By setting percent equal to .1, we are telling the down_sample method to give us a sample of the feature vectors with a size of |fvs|*.1, so we will end up with 10% of the original fvs.
+By setting percent equal to .1, we are telling the down_sample method to give us a sample of the feature vectors with a size of |fvs|*.1, so we will end up with 10% of the original size fvs.
 
 ## Step Ten: Selecting Seeds
 
-Once we have the feature vectors, we can select seeds for active learning, for this operation we need to score each pair which is positively correlated with being a match. That is the higher the score for the pair the more likely it is to be a match. In this example, we just take the sum of all the components of the feature vector for each pair.
+Once we have the feature vectors created ('fvs'), and a score column ('score'), we can select seeds.
 
 ```
 seeds = select_seeds(fvs, 50, labeler, 'score')
