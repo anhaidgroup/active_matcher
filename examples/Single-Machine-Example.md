@@ -19,7 +19,7 @@ import sys
 sys.path.append('.')
 sys.path.append('..')
 import shutil
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_scoremodel
 import pyspark.sql.functions as F
 from pyspark.sql import SparkSession
 from active_matcher.active_learning import EntropyActiveLearner
@@ -106,13 +106,13 @@ Additionally, we want to provide two important notes for the model process:
 First, each iteration in active learning requries training a new model and then applying the model to each feature vector we are doing active learning on. This means that if model training and/or inference are slow, the active learning process will be very slow.
 
 ### Model Threading
-Second, many algorithms use multiple threads for training and inference. Since training takes place on the Spark driver node, it is okay if model training with multiple threads. 
+Second, many algorithms use multiple threads for training and inference. Since training takes place on the Spark driver node, it is okay if model training is done with multiple threads. 
 
-However, the inference process is distributed across workers which each have tasks that run on threads. Then, the sklearn model also tries to use multiple threads. This can cause more threads to be running than CPU cores availabe. Therefore, for inference the model should not use multiple threads as it will cause significant over subscription of the processor and lead to extremely slow model inference times (including during active learning). 
+However, the inference process is distributed across workers which each have tasks that run on threads. Then, the sklearn model also tries to use multiple threads. This can cause more threads to be running than CPU cores availabe. Therefore, for inference, the model should not use multiple threads as it will cause significant oversubscription of the processor and lead to extremely slow model inference times (including during active learning). 
 
 Fortunately, SKLearn provides an easy way to disable threading using threadpoolctl, SKLearnModel automatically disables threading for inference using threadpoolctl meaning that sklearn models shouldn't require any modification and can be passed to SKLearnModel unchanged. If you are interested in reading more about oversubscription with sklearn, please check out their documentation [here](https://scikit-learn.org/stable/computing/parallelism.html#oversubscription-spawning-too-many-threads).
 
-The model threading issue discussed above is specific to SKLearn models and does not affect to SparkML models.
+The model threading issue discussed above is specific to SKLearn models and does not affect SparkML models.
 
 ## Step Seven: Selecting Features
 
