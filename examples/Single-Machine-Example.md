@@ -132,7 +132,7 @@ Now that we have selected features, we can generate feature vectors for each pai
 fv_gen = FVGenerator(features) # This creates an FVGenerator object with the features selected in Step Seven.
 fv_gen.build(A, B) # This creates a binary representation of the DataFrame and stores it on disk. This is a memory optimization to avoid the large dataframes being kept in memory.
 fvs = fv_gen.generate_fvs(cand) # generate_fvs creates feature vectors between candidate records in the 'cand' dataset.
-fvs = model.prep_fvs(fvs, 'features') # This ensures that fvs is the correct datatype (vector or array), fills in NaN values, and saves the feature fectors (fvs) in a column called 'features'.
+fvs = model.prep_fvs(fvs, 'features') # This ensures that fvs is the correct datatype (vector or array), fills in NaN values, and saves the feature vectors (fvs) in a column called 'features'.
 ```
 
 ## Step Nine: Scoring the Feature Vectors
