@@ -1,0 +1,37 @@
+active\_matcher package
+=======================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   active_matcher.active_matcher
+
+Submodules
+----------
+
+active\_matcher.blocking\_example module
+----------------------------------------
+
+.. automodule:: active_matcher.blocking_example
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+active\_matcher.matcher\_example module
+---------------------------------------
+
+.. automodule:: active_matcher.matcher_example
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: active_matcher
+   :members:
+   :show-inheritance:
+   :undoc-members:

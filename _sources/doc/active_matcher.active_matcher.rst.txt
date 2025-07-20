@@ -1,0 +1,79 @@
+active\_matcher.active\_matcher package
+=======================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   active_matcher.active_matcher.active_learning
+   active_matcher.active_matcher.feature
+   active_matcher.active_matcher.tokenizer
+
+Submodules
+----------
+
+active\_matcher.active\_matcher.algorithms module
+-------------------------------------------------
+
+.. automodule:: active_matcher.active_matcher.algorithms
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+active\_matcher.active\_matcher.feature\_selector module
+--------------------------------------------------------
+
+.. automodule:: active_matcher.active_matcher.feature_selector
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+active\_matcher.active\_matcher.fv\_generator module
+----------------------------------------------------
+
+.. automodule:: active_matcher.active_matcher.fv_generator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+active\_matcher.active\_matcher.labeler module
+----------------------------------------------
+
+.. automodule:: active_matcher.active_matcher.labeler
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+active\_matcher.active\_matcher.ml\_model module
+------------------------------------------------
+
+.. automodule:: active_matcher.active_matcher.ml_model
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+active\_matcher.active\_matcher.storage module
+----------------------------------------------
+
+.. automodule:: active_matcher.active_matcher.storage
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+active\_matcher.active\_matcher.utils module
+--------------------------------------------
+
+.. automodule:: active_matcher.active_matcher.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: active_matcher.active_matcher
+   :members:
+   :show-inheritance:
+   :undoc-members:

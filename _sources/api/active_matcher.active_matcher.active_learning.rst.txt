@@ -1,0 +1,29 @@
+active\_matcher.active\_matcher.active\_learning package
+========================================================
+
+Submodules
+----------
+
+active\_matcher.active\_matcher.active\_learning.cont\_entropy\_active\_learner module
+--------------------------------------------------------------------------------------
+
+.. automodule:: active_matcher.active_matcher.active_learning.cont_entropy_active_learner
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+active\_matcher.active\_matcher.active\_learning.ent\_active\_learner module
+----------------------------------------------------------------------------
+
+.. automodule:: active_matcher.active_matcher.active_learning.ent_active_learner
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: active_matcher.active_matcher.active_learning
+   :members:
+   :show-inheritance:
+   :undoc-members:
