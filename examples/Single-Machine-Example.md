@@ -1,10 +1,13 @@
-# Step-by-step guide to running ActiveMatcher on a Single Machine
+## Running ActiveMatcher on a Single Machine
 
-This guide is a step-by-step guide to running the active matcher. For this guide, we will assume that you have already installed everything from the appropriate [Single Machine Installation Guide](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-single-machine.md).
+Here we will walk through an example of running ActiveMatcher on a single machine. In particular, we will show you how to create a Python program step by step, then execute it at the end of the walkthrough. We assume you have already installed ActiveMatcher on a single machine, using [this guide](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-single-machine.md).
 
-## Step One: Download datasets
+### Step 1: Download the Datasets
 
-To begin, we need to download the datasets from the GitHub. Navigate to the dblp_acm folder here: https://github.com/anhaidgroup/active_matcher/tree/main/examples/data/dblp_acm. Then, click on 'cand.parquet' and click the download icon at the top. Repeat this for 'gold.parquet', 'table_a.parquet', and 'table_b.parquet'. Now, using your file manager on your computer, move these all into one folder called 'dblp_acm'.
+To begin, we need to download the datasets from GitHub. Navigate to the [dblp_acm folder](https://github.com/anhaidgroup/active_matcher/tree/main/examples/data/dblp_acm) then click 'cand.parquet' and click the download icon at the top. Repeat this for 'gold.parquet', 'table_a.parquet', and 'table_b.parquet'. Now move all these into a local folder called 'dblp_acm'. To explain these files: 
+* The files 'table_a.parquet' and 'table_b.parquet' contain the tuples of Table A and Table B, respectively.
+* The file 'cand.parquet' contains candidate tuple pairs that are output by the blocker. Each tuple pair is of the form (x,y) where x is a tuple in A and y is a tuple in B. The goal of ActiveMatcher is to predict for each such tuple pair whether it is a match or non-match.
+* The file 'gold.parquet' contains the gold matches, that is, the IDs of all tuple pairs that are matches between Tables A and B. 
 
 ## Step Two: Create Python file
 
