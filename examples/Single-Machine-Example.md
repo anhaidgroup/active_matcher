@@ -106,19 +106,15 @@ To continue with our example, the following code specifies the XGBClassifier mod
 ```
 model = SKLearnModel(XGBClassifier, eval_metric='logloss', objective='binary:logistic', max_depth=6, seed=42)
 ```
-
-Notice that we pass the type of model (XGBClassifier), not a model instance. Additionally, we can pass model specific keyword args as we would when constructing the model normally, in this case we passed
+Note that we pass the type of model (XGBClassifier), not a model instance. Additionally, we pass model-specific keyword args as we would when constructing the model normally. In this case we passed
 ```
 eval_metric='logloss', objective='binary:logistic', max_depth=6, seed=42
 ```
+#### Avoid Models with Slow Training and/or Inference
+Each iteration in the active learning process requires training a new model and then applying that model to each feature vector we are doing active learning on. So you should avoid using a model where training and/or inference (that is, model application) are slow, otherwise the active learning process will be slow. 
 
-Additionally, we want to provide two important notes for the model process:
-
-### Model Training and Inference Time
-First, each iteration in active learning requries training a new model and then applying the model to each feature vector we are doing active learning on. This means that if model training and/or inference are slow, the active learning process will be very slow.
-
-### Model Threading
-Second, many algorithms use multiple threads for training and inference. Since training takes place on the Spark driver node, it is okay if model training is done with multiple threads. 
+#### Be Careful with Threading (** NOT SURE IF THIS APPLIES TO LOCAL MACHINES? **)
+Many models use multiple threads for training and inference. Since training takes place on the Spark driver node, it is okay if model training is done with multiple threads. 
 
 However, the inference process is distributed across workers which each have tasks that run on threads. Then, the sklearn model also tries to use multiple threads. This can cause more threads to be running than CPU cores availabe. Therefore, for inference, the model should not use multiple threads as it will cause significant oversubscription of the processor and lead to extremely slow model inference times (including during active learning). 
 
