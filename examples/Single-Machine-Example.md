@@ -72,7 +72,7 @@ ActiveMatcher uses a labeler to label a candidate tuple pair as match or non-mat
 
 #### Using the Command-Line Interface Labeler
 
-We have provided a labeler that operates within the command-line interface (CLI). To specify this label, you should put the following code into the Python file: 
+We have provided a labeler that operates within the command-line interface (CLI). To specify this labeler, you should put the following code into the Python file: 
 ```
 from active_matcher.labeler import CLILabeler
 
@@ -88,7 +88,7 @@ gold_df = pd.read_parquet(data_dir / 'gold.parquet')
 gold = set(zip(gold_df.id1, gold_df.id2))
 labeler = GoldLabeler(gold)
 ```
-Here, if ActiveMatcher wants to know if a pair of tuples (x,y) is a match or non-match, it simply consults 'gold'. Thus, this is a "simulated" active learning process. It is not a "real" active learning process (like with the CLI Labeler), because it does not involve a human user in the loop (who actually labels the tuple pairs). 
+Here, if ActiveMatcher wants to know if a pair of tuples (x,y) is a match or non-match, it simply consults 'gold'. Thus, this is a "simulated" active learning process which is completely automatic. It is not a "real" active learning process (like with the CLI Labeler), because it does not require a human user to be in the loop (to label the tuple pairs). 
 
 Such simulated active learning using gold is very useful for code development, debugging, and computing the accuracy of the matching process. For the rest of this example, we will use this gold labeler. 
 
@@ -96,14 +96,13 @@ Such simulated active learning using gold is very useful for code development, d
 
 Currently we do not provide more labelers. But you can extend the labeling code in ActiveMatcher to create more powerful labelers, such as one that uses a GUI instead of the command-line interface. You can do this by subclassing the Labeler class. 
  
-### Step 7: Creating a Model
+### Step 7: Creating a Machine Learning Model to Serve as the Matcher
 
-Next we can choose a model to train. In this example we are using XGBClassifier, which exposes an SKLearn model interface. However, the user is free to select a model that they believe will fit their data well. The user has the option to select a model that exposes an SKLearn model interface or a SparkML model interface. 
+Next we specify a machine learning (ML) classification model to serve as the matcher. Here we will use XGBClassifier, which exposes an SKLearn model interface. In general, you can select any classification model that you believe will fit your data well and exposes an SKLearn or SparkML model interface. 
+ 
+SKLearn model options are described [here](https://scikit-learn.org/stable/supervised_learning.html), and SparkML model options are described [here](https://spark.apache.org/docs/latest/ml-classification-regression.html). Note that even though XGBClassifier exposes an SKLearn model interface, it is not included in the SKLearn package and so is not described there. See instead its documentation [here](https://xgboost.readthedocs.io/en/stable/index.html). 
 
-To read about SKLearn model options, please visit their documentation [here](https://scikit-learn.org/stable/supervised_learning.html). To read about SparkML model options, please visit their documentation [here](https://spark.apache.org/docs/latest/ml-classification-regression.html). Finally, as noted above, XGBClassifier exposes an SKLearn model interface, but it is not included in the SKLearn package. To read about the XGBoost model, please visit their documentation [here](https://xgboost.readthedocs.io/en/stable/index.html). 
-
-Now, we will demonstrate how to create the model object.
-
+To continue with our example, the following code specifies the XGBClassifier model: 
 ```
 model = SKLearnModel(XGBClassifier, eval_metric='logloss', objective='binary:logistic', max_depth=6, seed=42)
 ```
