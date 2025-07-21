@@ -7,15 +7,15 @@ Here we will walk through an example of running ActiveMatcher on a single machin
 To begin, we need to download the datasets from GitHub. Navigate to the [dblp_acm folder](https://github.com/anhaidgroup/active_matcher/tree/main/examples/data/dblp_acm) then click 'cand.parquet' and click the download icon at the top. Repeat this for 'gold.parquet', 'table_a.parquet', and 'table_b.parquet'. Now move all these into a local folder called 'dblp_acm'. To explain these files: 
 * The files 'table_a.parquet' and 'table_b.parquet' contain the tuples of Table A and Table B, respectively.
 * The file 'cand.parquet' contains candidate tuple pairs that are output by the blocker. Each tuple pair is of the form (x,y) where x is a tuple in A and y is a tuple in B. The goal of ActiveMatcher is to predict for each such tuple pair whether it is a match or non-match.
-* The file 'gold.parquet' contains the gold matches, that is, the IDs of all tuple pairs that are matches between Tables A and B. 
+* The file 'gold.parquet' contains the gold matches, that is, the IDs of all tuple pairs that are matches between Tables A and B. This file is used here only to compute the accuracy of the matching step. 
 
-## Step Two: Create Python file
+### Step 2: Create a Python File
 
-Within the 'dblp_acm' directory, create a file called 'example.py'. We will use this Python file to write the code.
+Within the 'dblp_acm' directory, create a file called 'example.py'. As we walk through the subsequent steps, we will add code to this file. 
 
-## Step Three: Import dependencies
+### Step 3: Import the Dependencies
 
-Now, we can open up the 'example.py' file. Before we begin, we first need to import all of the necessary packages that we will use.
+Now we add the following code to the Python file to import all of the necessary packages that we will use.
 
 ```
 import sys
@@ -39,9 +39,9 @@ simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 simplefilter(action="ignore", category=FutureWarning)
 ```
 
-## Step Four: Initialize Spark
+### Step 4: Initialize Spark
 
-Next we need to initialize Spark, for this example we are just going to run in local mode, however ActiveMatcher can also run on a cluster seemlessly.
+Next we initialize Spark, which runs in the local mode (that is, on your local machine) in this example.
 
 ```
 spark =  SparkSession.builder\
@@ -51,9 +51,9 @@ spark =  SparkSession.builder\
 
 ```
 
-## Step Five: Reading in Data
+### Step 5: Reading the Data
 
-Once we have the SparkSession initialized, we can read in the raw data along with our candidate set.
+Once we have the SparkSession initialized, we read in the tables along with our candidate set.
 
 ```
 data_dir = Path('./')
@@ -62,31 +62,41 @@ B = spark.read.parquet(str(data_dir / 'table_b.parquet'))
 cand = spark.read.parquet(str(data_dir / 'cand.parquet'))
 ```
 
-In this example, the provided datasets, table_a and table_b, have the same schema. ActiveMatcher requires that the datasets which are being matched have the same schema. Additionaly, ActiveMatcher requires that both A and B have an id column. An id column is a column where all of the values are unique integers. Since A and B are required to have the same schema, the id column in both datasets needs to have the same name as well. In this case, the id columns in A and B are both named '_id'.
+Here the provided datasets, table_a and table_b, have the same schema. ActiveMatcher requires that the datasets (that is, tables) being matched have the same schema. This schema must also contain an ID column. Note that each tuple (that is, record) must have a value for this ID column and all values (across the tuples) must be different. Here the ID columns for both table_a and table_b are named '_id'.
 
-Our candidate set is a set of rolled up pairs, where cand['id2'] refers to the B['_id'] of the record in table B and the ids in cand['id1_list'] refer to the records in table A with ids A['_id']. We use this format for improving effeciency of generating feature vectors, especially when cand is produced by a top-k blocking algorithm.
+The candidate set file 'cand.parquet' is a set of rolled up pairs, where cand['id2'] refers to the B['_id'] of the records in Table B and the ids in cand['id1_list'] refer to the records in Table A with ids A['_id']. This is an efficient way to store and manipulate a large number of candidate tuple pairs. 
 
-Next we can create a labeler, for this example, we use gold data to create an automatic labeler, however the Labeler class can be subclassed to add a human in the loop. 
+### Step 6: Specifying a Labeler
 
-```
-gold_df = pd.read_parquet(data_dir / 'gold.parquet')
-gold = set(zip(gold_df.id1, gold_df.id2))
-labeler = GoldLabeler(gold)
-```
+ActiveMatcher uses a labeler to label a candidate tuple pair as match or non-match. It does this in the step to create a set of seeds for the active learning process and in the step of active learning itself (as we describe soon). 
 
-Additionally, if you would like to label the data with a command-line interface because you do not already have a gold dataset, we provide a class called CLILabeler. Here is an example for how you would use the CLILabeler rather than the GoldLabeler:
+#### Using the Command-Line Interface Labeler
 
+We have provided a labeler that operates within the command-line interface (CLI). To specify this label, you should put the following code into the Python file: 
 ```
 from active_matcher.labeler import CLILabeler
 
 labeler = CLILabeler(a_df=A, b_df=B, id_col:'_id')
 ```
+Here '_id' is the name of the ID columns for Tables A and B. This labeler will display a pair of tuples (x,y) to the CLI, side by side, then ask you to specify if x and y match, or do not match, or if you are unsure. It then displays the next pair of tuples, and so on. 
 
-where id_col is the name of the id column in your data. 
+#### Using the Gold Labeler
 
-There are two steps where ActiveMatcher requires the user to label data if a simulated (GoldLabeler) is not being used. The first is when seeds are being selected and the second is during the Active Learning process. In either of these cases, using the CLILabeler will provide an interactive labeler using the command-line. Within the command-line, the user will see two records side-by-side. They will be asked if the records match, and will be prompted to input 'y' if they do match, 'n' if they do not match, and 'u' if they are unsure. 
+In this example, since we do have access to gold, that is, tuple pairs that are matches between Tables A and B, we will use the gold labeler, by adding the following code to the Python file: 
+```
+gold_df = pd.read_parquet(data_dir / 'gold.parquet')
+gold = set(zip(gold_df.id1, gold_df.id2))
+labeler = GoldLabeler(gold)
+```
+Here, if ActiveMatcher wants to know if a pair of tuples (x,y) is a match or non-match, it simply consults 'gold'. Thus, this is a "simulated" active learning process. It is not a "real" active learning process (like with the CLI Labeler), because it does not involve a human user in the loop (who actually labels the tuple pairs). 
 
-## Step Six: Creating a Model
+Such simulated active learning using gold is very useful for code development, debugging, and computing the accuracy of the matching process. For the rest of this example, we will use this gold labeler. 
+
+#### Using Other Labelers
+
+Currently we do not provide more labelers. But you can extend the labeling code in ActiveMatcher to create more powerful labelers, such as one that uses a GUI instead of the command-line interface. You can do this by subclassing the Labeler class. 
+ 
+### Step 7: Creating a Model
 
 Next we can choose a model to train. In this example we are using XGBClassifier, which exposes an SKLearn model interface. However, the user is free to select a model that they believe will fit their data well. The user has the option to select a model that exposes an SKLearn model interface or a SparkML model interface. 
 
