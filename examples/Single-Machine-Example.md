@@ -82,7 +82,7 @@ Here '_id' is the name of the ID columns for Tables A and B. This labeler will d
 
 #### Using the Gold Labeler
 
-In this example, since we do have access to gold, that is, tuple pairs that are matches between Tables A and B, we will use the gold labeler, by adding the following code to the Python file: 
+*In this example, since we do have access to gold, that is, tuple pairs that are matches between Tables A and B, we will use the gold labeler,* by adding the following code to the Python file: 
 ```
 gold_df = pd.read_parquet(data_dir / 'gold.parquet')
 gold = set(zip(gold_df.id1, gold_df.id2))
@@ -113,16 +113,14 @@ eval_metric='logloss', objective='binary:logistic', max_depth=6, seed=42
 #### Avoid Models with Slow Training and/or Inference
 Each iteration in the active learning process requires training a new model and then applying that model to each feature vector we are doing active learning on. So you should avoid using a model where training and/or inference (that is, model application) are slow, otherwise the active learning process will be slow. 
 
-#### Be Careful with Threading (** NOT SURE IF THIS APPLIES TO LOCAL MACHINES? **)
-Many models use multiple threads for training and inference. Since training takes place on the Spark driver node, it is okay if model training is done with multiple threads. 
+#### Avoid Threading for SKLearn Models
+Many ML models use multiple threads for training and inference. However, SKLearn models appear to have a problem using multiple threads for inference. So this should be disabled. 
 
-However, the inference process is distributed across workers which each have tasks that run on threads. Then, the sklearn model also tries to use multiple threads. This can cause more threads to be running than CPU cores availabe. Therefore, for inference, the model should not use multiple threads as it will cause significant oversubscription of the processor and lead to extremely slow model inference times (including during active learning). 
+Fortunately, SKLearn provides an easy way to disable threading using threadpoolctl. In the ActiveMatcher code, SKLearnModel automatically disables threading for inference using threadpoolctl. So SKLearn models do not require any modification and can be passed to SKLearnModel unchanged. If you want to read more about this issue, see [this document](https://scikit-learn.org/stable/computing/parallelism.html#oversubscription-spawning-too-many-threads).
 
-Fortunately, SKLearn provides an easy way to disable threading using threadpoolctl, SKLearnModel automatically disables threading for inference using threadpoolctl meaning that sklearn models shouldn't require any modification and can be passed to SKLearnModel unchanged. If you are interested in reading more about oversubscription with sklearn, please check out their documentation [here](https://scikit-learn.org/stable/computing/parallelism.html#oversubscription-spawning-too-many-threads).
+The above threading issue is specific to SKLearn models. It does not affect SparkML models.
 
-The model threading issue discussed above is specific to SKLearn models and does not affect SparkML models.
-
-## Step Seven: Selecting Features
+### Step 8: Selecting Features
 
 With all of that set up, we can now select features that we will use to generate feature vectors for each pair in cand. Here we use the default typical set of features, however extra_features can be set to True which will cause the code to generate significantly more features, and likely improve model accuracy at the cost of increased runtime for feature vector generation and active learning.
 
