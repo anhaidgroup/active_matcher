@@ -1,13 +1,13 @@
 ## Running ActiveMatcher on a Single Machine
 
-Here we will walk through an example of running ActiveMatcher on a single machine. In particular, we will show you how to create a Python program step by step, then execute it at the end of the walkthrough. We assume you have already installed ActiveMatcher on a single machine, using [this guide](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-single-machine.md).
+Here we will walk through an example of running ActiveMatcher on a single machine. In particular, we show how to create a Python program step by step, then execute it. We assume you have installed ActiveMatcher on a single machine, using [this guide](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-single-machine.md).
 
 ### Step 1: Download the Datasets
 
-To begin, we need to download the datasets from GitHub. Navigate to the [dblp_acm folder](https://github.com/anhaidgroup/active_matcher/tree/main/examples/data/dblp_acm) then click 'cand.parquet' and click the download icon at the top. Repeat this for 'gold.parquet', 'table_a.parquet', and 'table_b.parquet'. Now move all these into a local folder called 'dblp_acm'. To explain these files: 
-* The files 'table_a.parquet' and 'table_b.parquet' contain the tuples of Table A and Table B, respectively.
-* The file 'cand.parquet' contains candidate tuple pairs that are output by the blocker. Each tuple pair is of the form (x,y) where x is a tuple in A and y is a tuple in B. The goal of ActiveMatcher is to predict for each such tuple pair whether it is a match or non-match.
-* The file 'gold.parquet' contains the gold matches, that is, the IDs of all tuple pairs that are matches between Tables A and B. This file is used here only to compute the accuracy of the matching step. 
+First we download the datasets from GitHub. Navigate to the [dblp_acm folder](https://github.com/anhaidgroup/active_matcher/tree/main/examples/data/dblp_acm) then click 'cand.parquet' and click the download icon at the top. Repeat this for 'gold.parquet', 'table_a.parquet', and 'table_b.parquet'. Now move all these into a local folder called 'dblp_acm'. To explain these files: 
+* The files 'table_a.parquet' and 'table_b.parquet' contain the tuples of Table A and Table B, respectively. Our goal is to match A and B, that is, find matches between them. 
+* We assume blocking (e.g., using Sparkly or Delex) has been done. The file 'cand.parquet' contains candidate tuple pairs that are output by the blocker. Each tuple pair is of the form (x,y) where x is a tuple in A and y is a tuple in B. The goal of ActiveMatcher is to predict for each such tuple pair whether it is a match or non-match.
+* The file 'gold.parquet' contains the gold matches, that is, the IDs of all tuple pairs that are matches between Tables A and B. This file is used here only to simulate a user's labeling a set of tuple pairs for training a matcher, and to compute the accuracy of the matching step. Obviously when you apply ActiveMatcher "for real", you will not have access to the gold matches. 
 
 ### Step 2: Create a Python File
 
@@ -62,7 +62,7 @@ B = spark.read.parquet(str(data_dir / 'table_b.parquet'))
 cand = spark.read.parquet(str(data_dir / 'cand.parquet'))
 ```
 
-Here the provided datasets, table_a and table_b, have the same schema. ActiveMatcher requires that the datasets (that is, tables) being matched have the same schema. This schema must also contain an ID column. Note that each tuple (that is, record) must have a value for this ID column and all values (across the tuples) must be different. Here the ID columns for both table_a and table_b are named '_id'.
+Here the provided datasets, table_a and table_b, have the same schema. ***ActiveMatcher requires that the datasets (that is, tables) being matched have the same schema. This schema must also contain an ID column.*** Note that each tuple (that is, record) must have a value for this ID column and all values (across the tuples) must be different. Here the ID columns for both table_a and table_b are named '_id'.
 
 The candidate set file 'cand.parquet' is a set of rolled up pairs, where cand['id2'] refers to the B['_id'] of the records in Table B and the ids in cand['id1_list'] refer to the records in Table A with ids A['_id']. This is an efficient way to store and manipulate a large number of candidate tuple pairs. 
 
