@@ -120,17 +120,19 @@ Fortunately, SKLearn provides an easy way to disable threading using threadpoolc
 
 The above threading issue is specific to SKLearn models. It does not affect SparkML models.
 
-### Step 8: Selecting Features
+### Step 8: Creating Features for the ML Model
 
-With all of that set up, we can now select features that we will use to generate feature vectors for each pair in cand. Here we use the default typical set of features, however extra_features can be set to True which will cause the code to generate significantly more features, and likely improve model accuracy at the cost of increased runtime for feature vector generation and active learning.
-
+We now create a set of features. In the next step we will use these features to convert each pair of tuples (x,y) in the candidate set into a feature vector. We use the following code to create the features: 
 ```
 selector = FeatureSelector(extra_features=False)
 
 features = selector.select_features(A.drop('_id'), B.drop('_id'))
 ```
+The above code snippet will create features that compute similarity scores between the attributes of Table A and Table B. For example, a feature may compute the Jaccard score between A.name and B.name, after the names have been tokenized into sets of 3-grams. Another feature may compute the TF/IDF score between A.address and B.address, and so on. ActiveMatcher uses heuristics to examine the attributes of Tables A and B and automatically generate these features. 
 
-## Step Eight: Generating Feature Vectors
+Note that in the above code snippet, we pass 'extra_features=False' to FeatureSelector. If we set 'extra_features=True', ActiveMatcher will generate even more features. This may improve the ML model's accuracy, but will increase the time to generate the feature vectors and to perform active learning. 
+
+### Step 9: Generating the Feature Vectors
 
 Now that we have selected features, we can generate feature vectors for each pair in cand. First we need to build the features and then we can generate the actual feature vectors.
 
