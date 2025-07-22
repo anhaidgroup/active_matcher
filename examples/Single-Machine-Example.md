@@ -208,7 +208,7 @@ f'''
 
 ### Step 14: Running the Python Program
 
-Congratulations. You have finished writing a Python program for matching with ActiveMatcher, and now you can run the program. To do so, open a terminal and navigate to the directory that you wrote your 'example.py' file in. Then run the following command. Once the program is finished, it will output true_positives, 'precision', 'recall', and 'f1':
+You have finished writing a Python program for matching with ActiveMatcher. To run this program, open a terminal and navigate to the directory that you wrote your 'example.py' file in. Then run the following command, which will output true_positives, 'precision', 'recall', and 'f1':
 
 ```
 python3 example.py
