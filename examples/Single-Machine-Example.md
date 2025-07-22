@@ -132,16 +132,20 @@ The above code snippet will create features that compute similarity scores betwe
 
 Note that in the above code snippet, we pass 'extra_features=False' to FeatureSelector. If we set 'extra_features=True', ActiveMatcher will generate even more features. This may improve the ML model's accuracy, but will increase the time to generate the feature vectors and to perform active learning. 
 
-### Step 9: Generating the Feature Vectors
+### Step 9: Creating the Feature Vectors
 
-Now that we have selected features, we can generate feature vectors for each pair in cand. First we need to build the features and then we can generate the actual feature vectors.
-
+Now we use the features created in the previous step to convert all tuple pairs in the candidate set into feature vectors:
 ```
-fv_gen = FVGenerator(features) # This creates an FVGenerator object with the features selected in Step Seven.
-fv_gen.build(A, B) # This creates a binary representation of the DataFrame and stores it on disk. This is a memory optimization to avoid the large dataframes being kept in memory.
-fvs = fv_gen.generate_fvs(cand) # generate_fvs creates feature vectors between candidate records in the 'cand' dataset.
-fvs = model.prep_fvs(fvs, 'features') # This ensures that fvs is the correct datatype (vector or array), fills in NaN values, and saves the feature vectors (fvs) in a column called 'features'.
+fv_gen = FVGenerator(features) 
+fv_gen.build(A, B) 
+fvs = fv_gen.generate_fvs(cand) 
+fvs = model.prep_fvs(fvs, 'features') 
 ```
+In the above code snippet
+* Line 1 creates an FVGenerator object with the features previously created.
+* Line 2 creates a binary representation of the DataFrame 'cand' and stores it on disk. This is a memory optimization to avoid the large dataframes being kept in memory.
+* Line 3 creates a feature vector for each tuple pair in the cand set.
+* Line 4 ensures that fvs is the correct datatype (vector or array), fills in NaN values, and saves the feature vectors (fvs) in a column called 'features'.
 
 ## Step Nine: Scoring the Feature Vectors
 
