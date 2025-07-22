@@ -147,40 +147,28 @@ In the above code snippet
 * Line 3 creates a feature vector for each tuple pair in the cand set.
 * Line 4 ensures that fvs is the correct datatype (vector or array), fills in NaN values, and saves the feature vectors (fvs) in a column called 'features'.
 
-## Step Nine: Scoring the Feature Vectors
+### Step 10: Scoring the Feature Vectors
 
-Once we have the feature vectors, we need to score each pair such that the higher the score a pair recieves, the more likely it is to be a match. In this example, we just take the sum of all the components of the feature vector for each pair. This step is important for the optional down sampling and for selecting seeds. The score serves as a heuristic to evaluate if a pair is likely a match or likely a non-match.
+Next we compute a score for each feature vector, such that the higher the score, the more likely that it is a match. Later we will use these scores to select a set of seeds for active learning, and optionally to obtain a sample of the candidate set for active learning. 
 
+Here we compute the score of each feature vector to be the sum of all components of that vector. This is based on the heuristic that each component of a vector is a similarity score (such as Jaccard, cosine), so the higher the sum of these similarity scores, the more likely that the feature vector is a match (that is, the tuple pair corresponding to this vector is a match): 
 ```
 fvs = fvs.withColumn('score', F.aggregate('features', F.lit(0.0), lambda acc, x : acc + F.when(x.isNotNull() & ~F.isnan(x), x).otherwise(0.0) ))
 ```
 
-## Optional Step: Downsampling
-In some cases where the number of records is very large (over one million), it can be beneficial to take a sample of the data for model training. In many cases of matching, the number of non-matches will significantly outweigh the number of matches. Thus, random sampling could lead to a skewed sample of non-matches.  ActiveMatcher provides a method which uses a heuristic to ensure the sample contains both non-matches and matches. Here is an example of how to use the down sampling method:
+### Step 11: Selecting Seeds
 
-```
-from active_matcher.algorithms import down_sample
+Next we select a small set of tuple pairs that we will label. This set of tuple pairs will serve as "seeds" to start the active learning process. Specifically, we will use these seeds to train an initial matcher. Then we use the matcher to look for unlabeled "informative" tuple pairs, then we label those pairs and retrain the matcher, and so on. 
 
-sampled_fvs = down_sample(fvs, percent = .1, score_column= 'score')
-```
-
-By setting percent equal to .1, we are telling the down_sample method to give us a sample of the feature vectors with a size of |fvs|*.1, so we will end up with 10% of the original size fvs.
-
-## Step Ten: Selecting Seeds
-
-Once we have the feature vectors created ('fvs'), and a score column ('score'), we can select seeds.
-
+We select a set of 50 seeds as follows:
 ```
 seeds = select_seeds(fvs, 50, labeler, 'score')
 ```
+Here the scores that we have computed in the previous step are stored in the column 'score'. We select 25 feature vectors that have the highest scores (so they are most likely to be matches) and 25 feature vectors that have the lowest scores (so they are likely to be non-matches). 
 
-When selecting seeds, you may choose to use the sample rather than the full dataset. If you choose to do so, 'fvs' would be changed to 'sampled_fvs', so the full line would look like this:
+### Step 12: Using Active Learning to train the Matcher
 
-```
-seeds = select_seeds(sampled_fvs, 50, labeler, 'score')
-```
-
-## Step Eleven: Training the Model with Active Learning
+We now use active learning to train the matcher. First, we label the selected seeds (as matches or non-matches). Then we use the labeled seeds to train that matcher (which is a ML classifier in this case). Next, we apply this matcher to all feature vectors in the candidate set, to find those that our ** ASK DEV REVISE THIS STEP **
 
 Next we run active learning, for at most 50 iterations with a batch size of 10. This process will then output a trained model.
 
@@ -189,44 +177,15 @@ active_learner = EntropyActiveLearner(model, labeler, batch_size=10, max_iter=50
 trained_model = active_learner.train(fvs, seeds)
 ```
 
-Additionally, active learning can be run in a 'continuous' mode. The 'continuous' mode will allow the user to keep labeling data while new models are being trained in a different thread. This process can significantly reduce the amount of time a user is waiting during the active learning process since data to be labeled will be supplied continuously. If you would prefer to perform continous active learning and you are using a GoldLabeler, your code would look like this:
-```
-from active_matcher.active_learning import ContinuousActiveLearning
+### Step 13: Applying the Trained Matcher
 
-active_learner = ContinuousEntropyActiveLearner(model, labeler, max_labeled=550, on_demand_stop=False)
-trained_model = active_learner.train(fvs, seeds)
-```
-
-The max_labeled parameter is the number of examples (including the number of seeds) that the program should label. The on_demand_stop parameter tells the program that it should continue labeling until it reaches max_labeled. If you are using the CLILabeler, and you are going to label for a set period of time, or until you decide you don't want to label anymore, your call will look like this:
-
-```
-from active_matcher.active_learning import ContinuousActiveLearning
-
-active_learner = ContinuousEntropyActiveLearner(model, labeler, on_demand_stop=True)
-trained_model = active_learner.train(fvs, seeds)
-```
-
-Here, we do not need to set max_labeled parameter. The active learner will wait until they recieve a stop signal from the command line interface (an input of 's', for stop, from the user).
-
-
-When training the model, the user may choose to use the sample rather than the full dataset. If you choose to do so, 'fvs' would be changed to 'sampled_fvs', so the second line (the train line) would look like this:
-
-```
-trained_model = active_learner.train(sampled_fvs, seeds)
-```
-## Step Twelve: Applying the Trained Model
-
-We can then apply the trained model to the feature vectors, outputting the binary prediction into a fvs['prediction'] and the confidence of the prediction to fvs['condifidence']. 
-
-_If you used downsampling: At this point, since we are applying the trained model to the feature vectors, we should use the full feature vectors ('fvs'), rather than the sample ('sampled_fvs')._
-
+We can now apply the trained matcher to the feature vectors in the candidate set, outputting the binary prediction into a fvs['prediction'] and the confidence of the prediction to fvs['condifidence']. ** ASK DEV WHAT FORM FOR THE BINARY PREDICTION **
 ```
 fvs = trained_model.predict(fvs, 'features', 'prediction')
 fvs = trained_model.prediction_conf(fvs, 'features', 'confidence')
 ```
 
-Finally, we can compute precision, recall, and f1 of the predictions made by the model.
-
+Finally, we can compute precision, recall, and f1 of the predictions made by the matcher:
 ```
 res = fvs.toPandas()
 
@@ -247,9 +206,9 @@ f'''
 )
 ```
 
-## Step Thirteen: Running the Python Program
+### Step 14: Running the Python Program
 
-Congratulations. You have finished writing a Python program for matching with ActiveMatcher, and now you can run the program. To do so, open a terminal and navigate to the directory that you wrote your 'example.py' file in. Finally, run the following command, and once the program is finished, it will output true_positives, 'precision', 'recall', and 'f1':
+Congratulations. You have finished writing a Python program for matching with ActiveMatcher, and now you can run the program. To do so, open a terminal and navigate to the directory that you wrote your 'example.py' file in. Then run the following command. Once the program is finished, it will output true_positives, 'precision', 'recall', and 'f1':
 
 ```
 python3 example.py
