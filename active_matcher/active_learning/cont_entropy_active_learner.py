@@ -7,7 +7,7 @@ import numpy as np
 import pyspark.sql.types as T    
 from copy import deepcopy, copy
 from active_matcher.utils import persisted, get_logger, repartition_df, type_check
-from active_matcher.labeler import Labeler
+from active_matcher.labeler import Labeler, WebUILabeler
 from active_matcher.ml_model import MLModel, SKLearnModel, convert_to_array, convert_to_vector
 from pyspark.ml.functions import vector_to_array, array_to_vector
 from queue import PriorityQueue, Queue, Empty
@@ -108,7 +108,6 @@ class ContinuousEntropyActiveLearner:
             the ids of the seed feature vectors for starting active learning, these must be present in `fvs`
         """
         type_check(fvs, 'fvs', pyspark.sql.DataFrame)
-
         to_be_label_queue = PriorityQueue(self._queue_size)
         labeled_queue = Queue(self._queue_size * 5)
 
@@ -121,6 +120,8 @@ class ContinuousEntropyActiveLearner:
         #log.info('running training')
         terminate = False
         pos, neg = self._get_pos_negative(seeds.dropna(subset=['label']))
+        if isinstance(self._labeler, WebUILabeler):
+            log.warning(f"Records are almost ready to be labeled.")
         # if on_demand_stop is True, the active learning will stop when the user stops labeling
         # if on_demand_stop is False, the active learning will run until the max_labeled examples are labeled
         while (not terminate and self._on_demand_stop) or (nlabeled < self._max_labeled and not self._on_demand_stop):
@@ -144,7 +145,8 @@ class ContinuousEntropyActiveLearner:
         # signal training thread to stop and wait for termination
         stop_training.set()
         training_thread.join()
-
+        if isinstance(self._labeler, WebUILabeler):
+            log.warning("Active learning is complete.")
         return copy(self._model)
 
 
@@ -258,4 +260,3 @@ class PQueueItem:
     entropy : float
     item : Any=field(compare=False)
     
-
