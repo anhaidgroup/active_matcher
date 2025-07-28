@@ -17,6 +17,7 @@ decompress = zlib.decompress
 
 logging.basicConfig(
         stream=sys.stderr,
+        level=logging.INFO,
         format='[%(filename)s:%(lineno)s - %(funcName)s() ] %(asctime)-15s : %(message)s',
 )
 
