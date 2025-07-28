@@ -368,10 +368,6 @@ class WebUILabeler(Labeler):
                 self._current_fields_mem = self._current_fields
             return jsonify({'status': 'ok'})
 
-    @property
-    def streamlit_url(self):
-        return f"http://{self._flask_host}:{self._streamlit_port}"
-
     def _ensure_server_started(self):
         if not self._server_started:
             log = logging.getLogger('werkzeug')
