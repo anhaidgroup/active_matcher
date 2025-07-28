@@ -61,11 +61,11 @@ cand = spark.read.parquet(str(data_dir / 'cand.parquet'))
 
 Our candidate set is a set of rolled up pairs, where cand['id2'] refers to the B['_id'] of the record in table B and the ids in cand['id1_list'] refer to the records in table A with ids A['_id']. We use this format for improving effeciency of generating feature vectors, especially when cand is produced by a top-k blocking algorithm.
 
-### Step 6: Specifying a Labeler
+## Step 6: Specifying a Labeler
 
 ActiveMatcher uses a labeler to label a candidate tuple pair as match or non-match. It does this in the step to create a set of seeds for the active learning process and in the step of active learning itself (as we describe soon). 
 
-#### Using the Web-based Labeler
+### Using the Web-based Labeler
 
 We have provided a labeler that operates within a web-based environment. The web-based labeler will set up a Flask server with endpoints for fetching examples to be labeled and for submitting the labeled examples. It will also create a Streamlit UI that the user can access from their local machine to label the data. To specify this labeler, you should put the following code into the Python file: 
 ```
@@ -81,7 +81,7 @@ Once you get the public ip address, on your local machine you can open {public i
 
 This labeler will display a pair of tuples (x,y) to the web interface, side by side, then ask you to specify if x and y match, or do not match, or if you are unsure. It then displays the next pair of tuples, and so on. 
 
-#### Using the Gold Labeler
+### Using the Gold Labeler
 
 *In this example, since we do have access to gold, that is, tuple pairs that are matches between Tables A and B, we will use the gold labeler,* by adding the following code to the Python file: 
 ```
