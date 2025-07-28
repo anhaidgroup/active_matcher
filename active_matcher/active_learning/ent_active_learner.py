@@ -4,7 +4,7 @@ import pandas as pd
 import pyspark.sql.types as T    
 from copy import deepcopy, copy
 from active_matcher.utils import persisted, get_logger, repartition_df, type_check
-from active_matcher.labeler import Labeler
+from active_matcher.labeler import Labeler, WebUILabeler
 from active_matcher.ml_model import MLModel, SKLearnModel, convert_to_array, convert_to_vector
 from pyspark.ml.functions import vector_to_array, array_to_vector
 import pyspark
@@ -102,6 +102,8 @@ class EntropyActiveLearner:
         with persisted(fvs) as fvs:
             n_fvs = fvs.count()
             # just label everything and return 
+            if isinstance(self._labeler, WebUILabeler):
+                log.warning(f"Records are almost ready to be labeled. Go to {self._labeler.streamlit_url} to begin.")
             if n_fvs <= len(seeds) + (self._batch_size * self._max_iter):
                 if self._terminate_if_label_everything:
                     log.info('running al to completion would label everything, labeling all fvs and returning')
@@ -128,6 +130,7 @@ class EntropyActiveLearner:
             log.info(f'max iter = {max_itr}')
             i = 0
             label = None
+
             while i < max_itr and label != -1:
                 log.info(f'starting iteration {i}')
                 # train model
@@ -186,5 +189,6 @@ class EntropyActiveLearner:
             training_fvs = spark.createDataFrame(self.local_training_fvs_)
             # final train model
             self._model.train(training_fvs, 'features', 'label')
-
+        if isinstance(self._labeler, WebUILabeler):
+            log.warning("Active learning is complete.")
         return copy(self._model)
