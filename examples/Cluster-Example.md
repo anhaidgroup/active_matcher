@@ -93,9 +93,9 @@ Here, if ActiveMatcher wants to know if a pair of tuples (x,y) is a match or non
 
 Such simulated active learning using gold is very useful for code development, debugging, and computing the accuracy of the matching process. For the rest of this example, we will use this gold labeler. 
 
-#### Using Other Labelers
+### Using Other Labelers
 
-Currently we do not provide more labelers. But you can extend the labeling code in ActiveMatcher to create more powerful labelers, such as one that uses a GUI instead of the command-line interface. You can do this by subclassing the Labeler class. 
+Currently we do not provide more labelers. But you can extend the labeling code in ActiveMatcher to create more powerful labelers. You can do this by subclassing the Labeler class. 
  
 
 ## Step 7: Creating a Model
