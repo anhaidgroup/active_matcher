@@ -305,8 +305,7 @@ class CustomLabeler(Labeler):
 
 class WebUILabeler(Labeler):
     """
-    Drop-in replacement for WebUILabeler using in-memory state and REST endpoints (no file I/O).
-    Compatible with the existing Streamlit UI.
+    Web interface for labeling pairs of records.
 
     Parameters
     ----------
@@ -314,10 +313,9 @@ class WebUILabeler(Labeler):
     id_col : str, default '_id'
     flask_port : int, default 5005
     streamlit_port : int, default 8501
-    flask_host : str, default '127.0.0.1' (set to your public IP for remote access)
-    flask_url : str, default None (if set, used in Streamlit UI for FLASK_URL)
+    flask_host : str, default '127.0.0.1'   
     """
-    def __init__(self, a_df, b_df, id_col: str = '_id', flask_port: int = 5005, streamlit_port: int = 8501, flask_host: str = '127.0.0.1', flask_url: str = None):
+    def __init__(self, a_df, b_df, id_col: str = '_id', flask_port: int = 5005, streamlit_port: int = 8501, flask_host: str = '127.0.0.1'):
         self._a_df = a_df
         self._b_df = b_df
         self._id_col = id_col
@@ -326,7 +324,6 @@ class WebUILabeler(Labeler):
         self._flask_port = flask_port
         self._streamlit_port = streamlit_port
         self._flask_host = flask_host
-        self._flask_url = flask_url or f"http://{flask_host}:{flask_port}"
         self._lock = threading.Lock()
         self._current_pair = None
         self._current_fields_mem = None
@@ -447,7 +444,7 @@ import pandas as pd
 
 st.title("Active Matcher Web Labeler")
 
-FLASK_URL = "{self._flask_url}"
+FLASK_URL = "http://{self._flask_host}:{self._flask_port}"
 
 if 'last_pair' not in st.session_state:
     st.session_state['last_pair'] = None
