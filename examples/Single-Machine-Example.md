@@ -80,6 +80,10 @@ labeler = CLILabeler(a_df=A, b_df=B, id_col:'_id')
 ```
 Here '_id' is the name of the ID columns for Tables A and B. This labeler will display a pair of tuples (x,y) to the CLI, side by side, then ask you to specify if x and y match, or do not match, or if you are unsure. It then displays the next pair of tuples, and so on. 
 
+#### Using the Web Labeler
+
+****Dev will provide text for this one****
+
 #### Using the Gold Labeler
 
 *In this example, since we do have access to gold, that is, tuple pairs that are matches between Tables A and B, we will use the gold labeler,* by adding the following code to the Python file: 
@@ -94,7 +98,7 @@ Such simulated active learning using gold is very useful for code development, d
 
 #### Using Other Labelers
 
-Currently we do not provide more labelers. But you can extend the labeling code in ActiveMatcher to create more powerful labelers, such as one that uses a GUI instead of the command-line interface. You can do this by subclassing the Labeler class. 
+Currently we do not provide more labelers. But you can extend the labeling code in ActiveMatcher to create more powerful labelers. You can do this by subclassing the Labeler class (see the Web Labeler for an example of subclassing). 
  
 ### Step 7: Creating a Machine Learning Model to Serve as the Matcher
 
