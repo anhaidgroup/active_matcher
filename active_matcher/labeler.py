@@ -4,7 +4,20 @@ from tabulate import tabulate
 from pyspark.sql.functions import col
 import shutil
 import textwrap
-
+import streamlit as st
+import threading
+import queue
+import socket
+import os
+import time
+from flask import Flask, request, jsonify
+import requests
+import tempfile
+import json
+import subprocess
+import pyspark.sql.functions as F
+import pandas as pd
+import logging
 
 class Labeler(ABC):
 
@@ -61,7 +74,7 @@ class CLILabeler(Labeler):
         if self._current_fields is None:
             self._current_fields = set(self._all_fields)
 
-        print("Do these refer to the same concept?")
+        print("Do these two records refer to the same entity?")
         print("=" * 80)  # Separator line
         self._print_row(row1, row2, fields=self._current_fields)
         print("-" * 80)  # Separator line
@@ -71,7 +84,7 @@ class CLILabeler(Labeler):
             if label.startswith('h'):
                 self._help_interactive(row1, row2)
                 print("=" * 80)
-                self._print_row(row1, row2, fields=self._current_fields)
+                self._print_row(row1, row2, fields=self.current_fields)
                 print("-" * 80)
                 label = None 
             elif label.startswith('s'):
@@ -288,4 +301,286 @@ class CustomLabeler(Labeler):
         """Tabulate the key/value pairs of a dict."""
         table = list(d.items())
         print(tabulate(table, headers=('field', 'value'), tablefmt="github"))
+
+
+class WebUILabeler(Labeler):
+    """
+    Drop-in replacement for WebUILabeler using in-memory state and REST endpoints (no file I/O).
+    Compatible with the existing Streamlit UI.
+
+    Parameters
+    ----------
+    a_df, b_df : Spark DataFrames
+    id_col : str, default '_id'
+    flask_port : int, default 5005
+    streamlit_port : int, default 8501
+    flask_host : str, default '127.0.0.1' (set to your public IP for remote access)
+    flask_url : str, default None (if set, used in Streamlit UI for FLASK_URL)
+    """
+    def __init__(self, a_df, b_df, id_col: str = '_id', flask_port: int = 5005, streamlit_port: int = 8501, flask_host: str = '127.0.0.1', flask_url: str = None):
+        self._a_df = a_df
+        self._b_df = b_df
+        self._id_col = id_col
+        self._all_fields = None  # Will be set on first use
+        self._current_fields = None
+        self._flask_port = flask_port
+        self._streamlit_port = streamlit_port
+        self._flask_host = flask_host
+        self._flask_url = flask_url or f"http://{flask_host}:{flask_port}"
+        self._lock = threading.Lock()
+        self._current_pair = None
+        self._current_fields_mem = None
+        self._label = None
+        self._flask_app = Flask(__name__)
+        # Store the original DataFrame column order
+        self._column_order = list(a_df.columns)
+        self._setup_flask_routes()
+        self._flask_thread = None
+        self._streamlit_proc = None
+        self._server_started = False
+        # Do NOT start servers here
+
+    def _setup_flask_routes(self):
+        @self._flask_app.route('/get_pair', methods=['GET'])
+        def get_pair():
+            with self._lock:
+                if self._current_pair is not None:
+                    id1 = self._current_pair[0].get(self._id_col, None)
+                    id2 = self._current_pair[1].get(self._id_col, None)
+                    return jsonify({
+                        'row1': self._current_pair[0],
+                        'row2': self._current_pair[1],
+                        'fields': list(self._current_fields_mem)
+                    })
+                else:
+                    return jsonify({'status': 'waiting'}), 204
+
+        @self._flask_app.route('/submit_label', methods=['POST'])
+        def submit_label():
+            data = request.get_json()
+            with self._lock:
+                self._label = data.get('label')
+            return jsonify({'status': 'ok'})
+
+        @self._flask_app.route('/update_fields', methods=['POST'])
+        def update_fields():
+            data = request.get_json()
+            with self._lock:
+                self._current_fields = set(data.get('fields', []))
+                # Also update the memory version for immediate use
+                self._current_fields_mem = self._current_fields
+            return jsonify({'status': 'ok'})
+
+    @property
+    def streamlit_url(self):
+        return f"http://{self._flask_host}:{self._streamlit_port}"
+
+    def _ensure_server_started(self):
+        if not self._server_started:
+            log = logging.getLogger('werkzeug')
+            log.setLevel(logging.ERROR)
+            self._flask_thread = threading.Thread(
+                target=self._flask_app.run,
+                kwargs={'host': self._flask_host, 'port': self._flask_port, 'debug': False, 'use_reloader': False},
+                daemon=True
+            )
+            self._flask_thread.start()
+            # Launch Streamlit UI as a subprocess
+            app_code = self._streamlit_app_code()
+            with tempfile.NamedTemporaryFile('w', delete=False, suffix='.py') as f:
+                f.write(app_code)
+                app_path = f.name
+            streamlit_cmd = ["streamlit", "run", app_path, "--server.port", str(self._streamlit_port), "--server.headless", "true"]
+            self._streamlit_proc = subprocess.Popen(streamlit_cmd, env=os.environ.copy())
+            self._server_started = True
+            time.sleep(2)
+
+    def __call__(self, id1, id2):
+        self._ensure_server_started()
+        row1 = self._get_row(self._a_df, id1)
+        row2 = self._get_row(self._b_df, id2)
+        if self._all_fields is None:
+            self._all_fields = list(row1.keys())
+        if self._current_fields is None:
+            self._current_fields = set(self._all_fields)
+        with self._lock:
+            # Block if a previous pair is still waiting for a label
+            while self._current_pair is not None:
+                self._lock.release()
+                time.sleep(0.1)
+                self._lock.acquire()
+            self._current_pair = (row1, row2)
+            # Use the persisted field selection, fallback to all fields if not set
+            self._current_fields_mem = self._current_fields if self._current_fields else set(self._all_fields)
+            self._label = None
+        # Wait for label to be set by UI
+        while True:
+            with self._lock:
+                label = self._label
+            if label is not None:
+                break
+            time.sleep(0.2)
+        with self._lock:
+            self._current_pair = None
+            # Don't clear _current_fields_mem - preserve the field selection
+            self._label = None
+        return label
+
+    def _get_row(self, df, row_id):
+        """Fetch a single row from a Spark DataFrame as a dict."""
+        rows = df.filter(F.col(self._id_col) == row_id).limit(1).collect()
+        if not rows:
+            raise KeyError(f"No row with {self._id_col}={row_id}")
+        return rows[0].asDict()
+
+    def _streamlit_app_code(self):
+        column_order = self._column_order
+        return f'''
+import streamlit as st
+import requests
+import time
+import os
+import json
+import tempfile
+import textwrap
+import pandas as pd
+
+st.title("Active Matcher Web Labeler")
+
+FLASK_URL = "{self._flask_url}"
+
+if 'last_pair' not in st.session_state:
+    st.session_state['last_pair'] = None
+
+if 'selected_fields' not in st.session_state:
+    st.session_state['selected_fields'] = {column_order}
+
+if st.session_state.get('stopped', False):
+    st.write("Labeling stopped.")
+else:
+    pair = None
+    try:
+        resp = requests.get(FLASK_URL + '/get_pair', timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            row1 = data['row1']
+            row2 = data['row2']
+            fields = data['fields']
+            st.session_state['last_pair'] = (row1, row2, fields)
+            pair = (row1, row2, fields)
+        if resp.status_code == 204:
+            pair = None
+    except Exception as e:
+        pair = st.session_state['last_pair']
+
+    if pair is not None:
+        row1, row2, fields = pair
+        st.subheader("Do these two records refer to the same entity?")
+        # Interactive field selection
+        all_fields = {column_order}
         
+        # Function to send field updates to backend
+        def update_backend_fields(new_fields):
+            try:
+                requests.post(FLASK_URL + '/update_fields', json={{'fields': new_fields}}, timeout=10)
+            except Exception as e:
+                st.error(f"Failed to update fields: {{e}}")
+        
+        # Use the fields from the backend to ensure consistency
+        current_selection = fields
+        
+        # Create multiselect with callback
+        selected_fields = st.multiselect(
+            "Fields to display:",
+            options=all_fields,
+            default=current_selection,
+            key='field_selector',
+        )
+        
+        # Send updates to backend when selection changes
+        # Convert to sets for proper comparison
+        if set(selected_fields) != set(current_selection):
+            update_backend_fields(selected_fields)
+        def wrap(val, width=40):
+            return textwrap.fill(str(val), width=width, break_long_words=False)
+        table_data = []
+        # Maintain original column order by filtering all_fields to only include selected_fields
+        ordered_fields = [f for f in all_fields if f in selected_fields]
+        for f in ordered_fields:
+            a_val = wrap(row1.get(f, ''), width=40)
+            b_val = wrap(row2.get(f, ''), width=40)
+            table_data.append((f, a_val, b_val))  # Do NOT wrap f
+        # Render as HTML table for perfect wrapping
+        table_html = """<table>
+<thead>
+<tr>
+  <th style='white-space:nowrap'>Field</th>
+  <th style='max-width:300px;word-break:break-word;white-space:pre-wrap;'>From A</th>
+  <th style='max-width:300px;word-break:break-word;white-space:pre-wrap;'>From B</th>
+</tr>
+</thead>
+<tbody>
+"""
+        for f, a_val, b_val in table_data:
+            table_html += f"<tr><td style='white-space:nowrap'>{{f}}</td><td style='max-width:300px;word-break:break-word;white-space:pre-wrap;'>{{a_val}}</td><td style='max-width:300px;word-break:break-word;white-space:pre-wrap;'>{{b_val}}</td></tr>"
+        table_html += "</tbody></table>"
+        st.markdown(table_html, unsafe_allow_html=True)
+        
+        # Add light blue button styling
+        st.markdown("""
+        <style>
+        .stButton > button {{
+            background-color: #87CEEB !important;
+            color: #000000 !important;
+            border: 2px solid #4682B4 !important;
+            font-weight: bold !important;
+            border-radius: 8px !important;
+            padding: 8px 16px !important;
+        }}
+        .stButton > button:hover {{
+            background-color: #4682B4 !important;
+            color: white !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3, col4 = st.columns(4)
+        if 'label_sent' not in st.session_state:
+            st.session_state['label_sent'] = False
+        def send_label(label):
+            try:
+                requests.post(FLASK_URL + '/submit_label', json={{'label': label}}, timeout=10)
+                st.session_state['label_sent'] = True
+                if label == -1.0:
+                    st.session_state['stopped'] = True
+            except Exception as e:
+                st.error(f"Failed to send label: {{e}}")
+        with col1:
+            if st.button("Yes (y)", key="yes_btn"):
+                send_label(1.0)
+        with col2:
+            if st.button("No (n)", key="no_btn"):
+                send_label(0.0)
+        with col3:
+            if st.button("Unsure (u)", key="unsure_btn"):
+                send_label(2.0)
+        with col4:
+            if st.button("Stop (s)", key="stop_btn"):
+                send_label(-1.0)
+        if st.session_state['label_sent']:
+            if st.session_state.get('stopped', False):
+                st.write("Labeling stopped.")
+            else:
+                st.success("Label sent! Waiting for next pair...")
+                st.session_state['label_sent'] = False
+                time.sleep(0.3)  # Give backend time to update
+                st.rerun()
+    else:
+        st.write("No pair to label. Waiting...")
+        time.sleep(0.2)
+        st.rerun()
+'''
+
+

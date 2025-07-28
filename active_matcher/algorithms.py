@@ -3,7 +3,7 @@ import pyspark.sql.functions as F
 from pyspark.sql.window import Window
 import pandas as pd
 from active_matcher.utils import type_check
-from active_matcher.labeler import Labeler
+from active_matcher.labeler import Labeler, WebUILabeler
 import logging
 
 log = logging.getLogger(__name__)
@@ -109,6 +109,9 @@ def select_seeds(fvs, nseeds, labeler, score_column='score'):
     # iteratively label vectors, attempt to produce a 
     # set 50% positive 50% negative set 
     i = 0
+    if isinstance(labeler, WebUILabeler):
+        log.warning(f"Ready for seeds to be labeled. Go to {labeler.streamlit_url} to begin.")
+    
     while pos_count + neg_count < nseeds and i < nseeds * 2:
         try:
             idx, ex = next(maybe_pos) if pos_count <= neg_count else next(maybe_neg)
@@ -133,6 +136,7 @@ def select_seeds(fvs, nseeds, labeler, score_column='score'):
         i += 1
     if not seeds:
         raise RuntimeError("No seeds were labeled before stopping")
-
+    if isinstance(labeler, WebUILabeler):
+        log.warning("Seed selection is complete.")
     log.info(f'seeds: pos_count = {pos_count} neg_count = {neg_count}')
     return pd.DataFrame(seeds)
