@@ -108,8 +108,6 @@ class ContinuousEntropyActiveLearner:
             the ids of the seed feature vectors for starting active learning, these must be present in `fvs`
         """
         type_check(fvs, 'fvs', pyspark.sql.DataFrame)
-        if isinstance(self._labeler, WebUILabeler):
-            log.warning(f"Records are almost ready to be labeled. Go to {self._labeler.streamlit_url} to begin.")
         to_be_label_queue = PriorityQueue(self._queue_size)
         labeled_queue = Queue(self._queue_size * 5)
 
@@ -122,6 +120,8 @@ class ContinuousEntropyActiveLearner:
         #log.info('running training')
         terminate = False
         pos, neg = self._get_pos_negative(seeds.dropna(subset=['label']))
+        if isinstance(self._labeler, WebUILabeler):
+            log.warning(f"Records are almost ready to be labeled.")
         # if on_demand_stop is True, the active learning will stop when the user stops labeling
         # if on_demand_stop is False, the active learning will run until the max_labeled examples are labeled
         while (not terminate and self._on_demand_stop) or (nlabeled < self._max_labeled and not self._on_demand_stop):

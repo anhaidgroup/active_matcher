@@ -102,8 +102,6 @@ class EntropyActiveLearner:
         with persisted(fvs) as fvs:
             n_fvs = fvs.count()
             # just label everything and return 
-            if isinstance(self._labeler, WebUILabeler):
-                log.warning(f"Records are almost ready to be labeled. Go to {self._labeler.streamlit_url} to begin.")
             if n_fvs <= len(seeds) + (self._batch_size * self._max_iter):
                 if self._terminate_if_label_everything:
                     log.info('running al to completion would label everything, labeling all fvs and returning')
@@ -130,7 +128,8 @@ class EntropyActiveLearner:
             log.info(f'max iter = {max_itr}')
             i = 0
             label = None
-
+            if isinstance(self._labeler, WebUILabeler):
+                log.warning("Records are almost ready to be labeled.")
             while i < max_itr and label != -1:
                 log.info(f'starting iteration {i}')
                 # train model
