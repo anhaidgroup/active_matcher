@@ -70,7 +70,7 @@ The candidate set file 'cand.parquet' is a set of rolled up pairs, where cand['i
 
 ActiveMatcher uses a labeler to label a candidate tuple pair as match or non-match. It does this in the step to create a set of seeds for the active learning process and in the step of active learning itself (as we describe soon). 
 
-#### Using the Command-Line Interface Labeler
+#### Using the Command-Line Interface (CLI) Labeler
 
 We have provided a labeler that operates within the command-line interface (CLI). To specify this labeler, you should put the following code into the Python file: 
 ```
@@ -90,7 +90,7 @@ labeler = GoldLabeler(gold)
 ```
 Here, if ActiveMatcher wants to know if a pair of tuples (x,y) is a match or non-match, it simply consults 'gold'. Thus, this is a "simulated" active learning process which is completely automatic. It is not a "real" active learning process (like with the CLI Labeler), because it does not require a human user to be in the loop (to label the tuple pairs). 
 
-Such simulated active learning using gold is very useful for code development, debugging, and computing the accuracy of the matching process. For the rest of this example, we will use this gold labeler. 
+Such simulated active learning using gold is very useful for code development, debugging, and computing the accuracy of the matching process. *For the rest of this example, we will use this gold labeler.*
 
 #### Using Other Labelers
 
@@ -111,10 +111,10 @@ Note that we pass the type of model (XGBClassifier), not a model instance. Addit
 eval_metric='logloss', objective='binary:logistic', max_depth=6, seed=42
 ```
 #### Avoid Models with Slow Training and/or Inference
-Each iteration in the active learning process requires training a new model and then applying that model to each feature vector we are doing active learning on. So you should avoid using a model where training and/or inference (that is, model application) are slow, otherwise the active learning process will be slow. 
+Each iteration in the active learning process requires training a new model and then applying that model to each feature vector we are doing active learning on. So you should avoid using a model where training and/or inference (that is, model application) are slow, otherwise the active learning process will be slow. Use such a model only if you think the benefits (for example, higher accuracy) will outweigh the long runtime. 
 
 #### Avoid Threading for SKLearn Models
-Many ML models use multiple threads for training and inference. However, SKLearn models appear to have a problem using multiple threads for inference. So this should be disabled. 
+You do not need to take any action here. This part is only for your information. Many ML models use multiple threads for inference. However, SKLearn models appear to have a problem using multiple threads for inference. So this should be disabled. 
 
 Fortunately, SKLearn provides an easy way to disable threading using threadpoolctl. In the ActiveMatcher code, SKLearnModel automatically disables threading for inference using threadpoolctl. So SKLearn models do not require any modification and can be passed to SKLearnModel unchanged. If you want to read more about this issue, see [this document](https://scikit-learn.org/stable/computing/parallelism.html#oversubscription-spawning-too-many-threads).
 
@@ -158,7 +158,7 @@ fvs = fvs.withColumn('score', F.aggregate('features', F.lit(0.0), lambda acc, x 
 
 ### Step 11: Selecting Seeds
 
-Next we select a small set of tuple pairs that we will label. This set of tuple pairs will serve as "seeds" to start the active learning process. Specifically, we will use these seeds to train an initial matcher. Then we use the matcher to look for unlabeled "informative" tuple pairs, then we label those pairs and retrain the matcher, and so on. 
+Next we select a small set of tuple pairs that we will label. This set of tuple pairs will serve as "seeds" to start the active learning process. Specifically, we will use these seeds to train an initial matcher. Then we use the matcher to look for unlabeled "informative" tuple pairs, then we ask the user to label those pairs and retrain the matcher, and so on. 
 
 We select a set of 50 seeds as follows:
 ```
@@ -168,15 +168,18 @@ Here the scores that we have computed in the previous step are stored in the col
 
 ### Step 12: Using Active Learning to train the Matcher
 
-We now use active learning to train the matcher. First, we label the selected seeds (as matches or non-matches). Then we use the labeled seeds to train that matcher (which is a ML classifier in this case). Next, we apply this matcher to all feature vectors in the candidate set, to find those that our ** ASK DEV REVISE THIS STEP **
-
-Next we run active learning, for at most 50 iterations with a batch size of 10. This process will then output a trained model.
-
+We now use active learning to train the matcher by adding the following code to the Python file:  
 ```
 active_learner = EntropyActiveLearner(model, labeler, batch_size=10, max_iter=50)
 trained_model = active_learner.train(fvs, seeds)
 ```
+In the above code 
+* We ask the user to label the selected seeds (as matches or non-matches), using the labeler 'labeler'.
+* Then we use the labeled seeds to train the matcher specified in 'model' (which is a ML classifier in this case).
+* Then we perform up to 'max_iter=50' iterations. In each iteration we apply the trained matcher to all feature vectors (in the candidate set) to predict them as matches/non-matches, use these predictions to select the top 'batch_size=10' most informative tuple pairs, ask the user to label these selected tuple pairs as matches/non-matches, then re-train the matcher using *all* tuple pairs that have been labeled so far.
 
+The above training process stops when we have finished 'max_iter=50' iterations, or when we have run out of tuple pairs to select. In any case, we return the matcher that has been trained with all tuple pairs that have been labeled. 
+   
 ### Step 13: Applying the Trained Matcher
 
 We can now apply the trained matcher to the feature vectors in the candidate set, outputting the binary prediction into a fvs['prediction'] and the confidence of the prediction to fvs['condifidence']. ** ASK DEV WHAT FORM FOR THE BINARY PREDICTION **
