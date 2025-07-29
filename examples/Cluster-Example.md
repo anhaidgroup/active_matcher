@@ -52,9 +52,9 @@ spark =  SparkSession.builder\
 
 ```
 
-## Step 5: Reading the Data
+### Step 5: Reading the Data
 
-Once we have the SparkSession initialized, we can read in the raw data along with our candidate set.
+Once we have the SparkSession initialized, we can read in the tables along with our candidate set.
 
 ```
 data_dir = Path('/home/ubuntu/dblp_acm')
@@ -62,28 +62,43 @@ A = spark.read.parquet(str(data_dir / 'table_a.parquet'))
 B = spark.read.parquet(str(data_dir / 'table_b.parquet'))
 cand = spark.read.parquet(str(data_dir / 'cand.parquet'))
 ```
+Here the provided datasets, table_a and table_b, have the same schema. ***ActiveMatcher requires that the datasets (that is, tables) being matched have the same schema. This schema must also contain an ID column.*** Note that each tuple (that is, record) must have a value for this ID column and all values (across the tuples) must be different. Here the ID columns for both table_a and table_b are named '_id'.
 
-Our candidate set is a set of rolled up pairs, where cand['id2'] refers to the B['_id'] of the record in table B and the ids in cand['id1_list'] refer to the records in table A with ids A['_id']. We use this format for improving effeciency of generating feature vectors, especially when cand is produced by a top-k blocking algorithm.
+The candidate set file 'cand.parquet' is a set of rolled up pairs, where cand['id2'] refers to the B['_id'] of the records in Table B and the ids in cand['id1_list'] refer to the records in Table A with ids A['_id']. This is an efficient way to store and manipulate a large number of candidate tuple pairs. 
 
-## Step 6: Specifying a Labeler
+### Step 6: Specifying a Labeler
 
 ActiveMatcher uses a labeler to label a candidate tuple pair as match or non-match. It does this in the step to create a set of seeds for the active learning process and in the step of active learning itself (as we describe soon). 
 
-### Using the Web-based Labeler
+### Using the Web Labeler
 
-We have provided a labeler that operates within a web-based environment. The web-based labeler will set up a Flask server with endpoints for fetching examples to be labeled and for submitting the labeled examples. It will also create a Streamlit UI that the user can access from their local machine to label the data. To specify this labeler, you should put the following code into the Python file: 
+We have provided a Web-based labeler that the user can use to label tuple pairs when running ActiveMatcher on a cluster of machines. Specifically, when the Spark process underlying ActiveMatcher needs to label tuple pairs, it sends these pairs to a Flask-based Web server, which in turn sends these pairs to a Streamlit GUI, where the user can label. The labeled pairs are sent back to the Flaks Web server, which in turn sends them back to the Spark process. 
+
+The Flask-based Web server and the Streamlit GUI are hosted on the machine on which the user originally submitted the Spark job embodying ActiveMatcher. In this example, this machine is the Spark master node. But in theory, the Flask Web server and the Streamlit GUI can be hosted on any network-accessible machine. 
+
+To use this Web labeler, put the following code into the Python file:
 ```
 from active_matcher.labeler import WebUILabeler
 
 labeler = WebUILabeler(a_df=A, b_df=B, id_col:'_id', flask_port=5005, streamlit_port=8501, flask_host='127.0.0.1')
 ```
-Here '_id' is the name of the ID columns for Tables A and B. The 'flask_port' will be the port number for the Flask server to run on. The 'streamlit_port' will be the port number for the Streamlit app to be run on. Unless you have other processes running on port 5005 and/or 8501, there should be no need to change the default arguments for 'flask_port' or 'streamlit_port'. It is important that the 'flask_port' and 'streamlit_port' are two distinct values. You may not set them both to the same value. Next, 'flask_host' is the ip where the flask server should be running. By using the default value of '127.0.0.1', it is saying to run the server locally on the instance where you submitted the Spark job. This means that only processes on the same instance can call the Flask endpoints, which is correct for this use case.
+To explain the above paramaters: 
+* Here '_id' is the name of the ID columns for Tables A and B.
+* The 'flask_port' will be the port number for the Flask server to run on. The 'streamlit_port' will be the port number for the Streamlit app to be run on.
+* Unless you have other processes running on port 5005 and/or 8501, there should be no need to change the default arguments for 'flask_port' or 'streamlit_port'. It is important that the 'flask_port' and 'streamlit_port' are two distinct values. You may not set them both to the same value.
+* Next, 'flask_host' is the IP where the Flask server should be running. ***By using the default value of '127.0.0.1', we are running the Flask server locally on the node where you submitted the Spark job (which is the master node in this example). This means that only processes on the same node can call the Flask endpoints (which is fine for this example).***
 
-The Streamlit UI will be run on 0.0.0.0 from the instance which will make it accessible via the instances public ip. Here, the instance refers to the instance where you submitted your Spark job. We will now discuss how to get the public ip of the instance using the AWS dashboard. The following assumes that you have set up your cluster using our instructions [here](https://github.com/anhaidgroup/active_matcher/blob/main/doc/installation-guides/install-cloud-based-cluster.md). If this is true, you should navigate to the 'EC2' section of the dashboard. Then, you can select an instance from the list of instances by clicking on the checkbox to the left of its name. When you select an instance on the instance page, an informational panel will appear at the bottom of the page. Switch to the ‘details’ tab and record public IPv4 address of the instance running your Spark job. It is okay that the Streamlit UI is accessible via the instances public ip because in the installation, you would have set up a security group that only allows specific ip's (like your local machine) to access the instance at all. So, even though it is avaiable via the public ip, random users should not be able access the site.
+The Streamlit UI will be run on 0.0.0.0 from the master node. This makes the UI accessible via the master node's public IP. (Again, we assume here that the master node is where you submitted your Spark job.) 
 
-Once you get the public ip address, on your local machine you can open {public ip address}:{streamlit_port} in the browser of your choice to see the Web UI. If the public ip address of you instance was 1.2.3.4 and you used the default streamlit port 8501, then you would enter 1.2.3.4:8501 into your browser to view the UI.
+We now discuss how to get the public IP of any instance (that is, node) of your cluster using the AWS dashboard. We assume that you have set up your cluster using our instructions [here](https://github.com/anhaidgroup/active_matcher/blob/main/doc/installation-guides/install-cloud-based-cluster.md). 
+* If so, you should navigate to the 'EC2' section of the dashboard. Then, you can select an instance from the list of instances by clicking on the checkbox to the left of its name.
+* When you select an instance on the instance page, an informational panel will appear at the bottom of the page. Switch to the ‘details’ tab and record public IPv4 address of the instance. 
 
-This labeler will display a pair of tuples (x,y) to the web interface, side by side, then ask you to specify if x and y match, or do not match, or if you are unsure. It then displays the next pair of tuples, and so on. 
+Once you have obtained the public IP address of the master node, on your local machine you can open {public ip address}:{streamlit_port} in the browser of your choice to see the Web UI. For example, if the public IP address of the master node is 1.2.3.4 and you use the default Streamlit port 8501, you can enter 1.2.3.4:8501 into your browser to view the Web UI.
+
+The Web UI will display a pair of tuples (x,y), side by side, then ask you to specify if x and y match, or do not match, or if you are unsure. It then displays the next pair of tuples, and so on. 
+
+Finally, we note that it is okay that the Streamlit UI is accessible via the master node's public IP. This should not present a security issue, because when installing the Spark cluster, you should have set up a security group that only allows specific IPs (like your local machine) to access the nodes. So random users should not be able to access the Web UI.
 
 ### Using the Gold Labeler
 
