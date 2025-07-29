@@ -68,9 +68,9 @@ The candidate set file 'cand.parquet' is a set of rolled up pairs, where cand['i
 
 ### Step 6: Specifying a Labeler
 
-ActiveMatcher uses a labeler to label a candidate tuple pair as match or non-match. It does this in the step to create a set of seeds for the active learning process and in the step of active learning itself (as we describe soon). 
+ActiveMatcher uses a labeler to label a candidate tuple pair as match or non-match. It does this in the step to create a set of seeds for the active learning process and in the step of active learning itself (as we describe soon). Currently ActiveMatcher provides a command-line interface (CLI) labeler, a Web-based labeler, and a gold labeler. Among these, the CLI labeler can only be used when running ActiveMatcher on a single local machine. In what follows we discuss using the Web-based labeler and the gold labeler. 
 
-### Using the Web Labeler
+#### Using the Web Labeler
 
 We have provided a Web-based labeler that the user can use to label tuple pairs when running ActiveMatcher on a cluster of machines. Specifically, when the Spark process underlying ActiveMatcher needs to label tuple pairs, it sends these pairs to a Flask-based Web server, which in turn sends these pairs to a Streamlit GUI, where the user can label. The labeled pairs are sent back to the Flaks Web server, which in turn sends them back to the Spark process. 
 
@@ -100,7 +100,7 @@ The Web UI will display a pair of tuples (x,y), side by side, then ask you to sp
 
 Finally, we note that it is okay that the Streamlit UI is accessible via the master node's public IP. This should not present a security issue, because when installing the Spark cluster, you should have set up a security group that only allows specific IPs (like your local machine) to access the nodes. So random users should not be able to access the Web UI.
 
-### Using the Gold Labeler
+#### Using the Gold Labeler
 
 *In this example, since we do have access to gold, that is, tuple pairs that are matches between Tables A and B, we will use the gold labeler,* by adding the following code to the Python file: 
 ```
@@ -108,16 +108,15 @@ gold_df = pd.read_parquet(data_dir / 'gold.parquet')
 gold = set(zip(gold_df.id1, gold_df.id2))
 labeler = GoldLabeler(gold)
 ```
-Here, if ActiveMatcher wants to know if a pair of tuples (x,y) is a match or non-match, it simply consults 'gold'. Thus, this is a "simulated" active learning process which is completely automatic. It is not a "real" active learning process (like with the CLI Labeler), because it does not require a human user to be in the loop (to label the tuple pairs). 
+Here, if ActiveMatcher wants to know if a pair of tuples (x,y) is a match or non-match, it simply consults 'gold'. Thus, this is a "simulated" active learning process which is completely automatic. It is not a "real" active learning process (like with the Web-based Labeler), because it does not require a human user to be in the loop (to label the tuple pairs). 
 
 Such simulated active learning using gold is very useful for code development, debugging, and computing the accuracy of the matching process. For the rest of this example, we will use this gold labeler. 
 
-### Using Other Labelers
+#### Using Other Labelers
 
-Currently we do not provide more labelers. But you can extend the labeling code in ActiveMatcher to create more powerful labelers. You can do this by subclassing the Labeler class. 
- 
+Currently we do not provide more labelers. But you can extend the labeling code in ActiveMatcher to create more powerful labelers. You can do this by subclassing the Labeler class (see the Web Labeler for an example of subclassing). 
 
-## Step 7: Creating a Model
+### Step 7: Creating a Model
 
 Next we can choose a model to train. In this example we are using XGBClassifier. Notice that we pass the type of model, not a model instance. Additionally, we can pass model specific keyword args as we would when constructing the model normally, in this case we passed,
 
