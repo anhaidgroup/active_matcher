@@ -1,18 +1,23 @@
-# Step-by-step guide to running ActiveMatcher on a Cloud-Based Cluster
+## Running ActiveMatcher on a Cluster of Machines
 
-This guide is a step-by-step guide to running the active matcher. For this guide, we will assume that you have already installed everything from the [Cloud Based Cluster Guide](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-cloud-based-cluster.md) and created a Spark cluster.
+Here we will walk through an example of running ActiveMatcher on a cluster of machines (on AWS). In particular, we show how to create a Python program step by step, then execute it. We assume you have installed ActiveMatcher on a cluster of machines, using [this guide](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-cloud-based-cluster.md).
 
-## Step 1: Download datasets --- We should change when the datasets are hosted to make it easier using wget
+### Step 1: Download the Datasets
 
-To begin, we need to download the datasets from the GitHub. Navigate to the dblp_acm folder here: https://github.com/anhaidgroup/active_matcher/tree/main/examples/data/dblp_acm. Then, click on 'cand.parquet' and click the download icon at the top. Repeat this for 'gold.parquet', 'table_a.parquet', and 'table_b.parquet'. Now, using your file manager on your computer, move these all into one folder called 'dblp_acm'. (if the data is not hosted somewhere, we will need to add instructions about using scp). This should be done on all of the nodes.
+First we download the datasets from GitHub. Navigate to the [dblp_acm folder](https://github.com/anhaidgroup/active_matcher/tree/main/examples/data/dblp_acm) then click 'cand.parquet' and click the download icon at the top. Repeat this for 'gold.parquet', 'table_a.parquet', and 'table_b.parquet'. Now move all these into a local folder called 'dblp_acm' on each node in the cluster. That is, each node must have a folder with the same path and that folder must contain the above three files. 
 
-## Step 2: Create Python file
+To explain these files: 
+* The files 'table_a.parquet' and 'table_b.parquet' contain the tuples of Table A and Table B, respectively. Our goal is to match A and B, that is, find matches between them. 
+* We assume blocking (e.g., using Sparkly or Delex) has been done. The file 'cand.parquet' contains candidate tuple pairs that are output by the blocker. Each tuple pair is of the form (x,y) where x is a tuple in A and y is a tuple in B. The goal of ActiveMatcher is to predict for each such tuple pair whether it is a match or non-match.
+* The file 'gold.parquet' contains the gold matches, that is, the IDs of all tuple pairs that are matches between Tables A and B. This file is used here only to simulate a user's labeling a set of tuple pairs for training a matcher, and to compute the accuracy of the matching step. Obviously when you apply ActiveMatcher "for real", you will not have access to the gold matches. 
 
-On the master node, in the 'dblp_acm' directory, create a file called 'example.py'. We will use this Python file to write the code.
+### Step 2: Create a Python File
 
-## Step 3: Import dependencies
+On the master node, in the 'dblp_acm' directory, create a file called 'cluster_am_example.py'. As we walk through the subsequent steps, we will add code to this file. 
 
-Now, we can open up the 'example.py' file. Before we begin, we first need to import all of the necessary packages that we will use.
+### Step 3: Import the Dependencies
+
+Now we add the following code to the Python file to import all of the necessary packages that we will use.
 
 ```
 import sys
@@ -36,10 +41,9 @@ simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 simplefilter(action="ignore", category=FutureWarning)
 ```
 
-## Step 4: Initialize Spark
+### Step 4: Initialize Spark
 
-Next we need to initialize Spark and for this example we will run on a cluster.
-
+Next we initialize Spark, which runs on a cluster for this example.
 ```
 spark =  SparkSession.builder\
                         .master('{url of Spark Master}')\
@@ -48,7 +52,7 @@ spark =  SparkSession.builder\
 
 ```
 
-## Step 5: Reading in Data
+## Step 5: Reading the Data
 
 Once we have the SparkSession initialized, we can read in the raw data along with our candidate set.
 
