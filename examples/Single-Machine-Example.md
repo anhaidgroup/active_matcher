@@ -82,7 +82,7 @@ Here '_id' is the name of the ID columns for Tables A and B. This labeler will d
 
 #### Using the Web Labeler
 
-We have provided a Web-based labeler that the user can use to label tuple pairs when running ActiveMatcher. Specifically, when the Spark process underlying ActiveMatcher needs to label tuple pairs, it sends these pairs to a Flask-based Web server, which in turn sends these pairs to a Streamlit GUI, where the user can label. The labeled pairs are sent back to the Flaks Web server, which in turn sends them back to the Spark process. 
+We have provided a Web-based labeler that the user can use to label tuple pairs when running ActiveMatcher. Specifically, when the Spark process underlying ActiveMatcher needs to label tuple pairs, it sends these pairs to a Flask-based Web server, which in turn sends these pairs to a Streamlit GUI, where the user can label. The labeled pairs are sent back to the Flask Web server, which in turn sends them back to the Spark process. 
 
 The Flask-based Web server and the Streamlit GUI are hosted on the users local machine. 
 
