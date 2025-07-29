@@ -163,7 +163,7 @@ fvs = model.prep_fvs(fvs, 'features')
 ```
 In the above code snippet
 * Line 1 creates an FVGenerator object with the features previously created.
-* Line 2 creates a binary representation of the DataFrame 'cand' and stores it on disk. This is a memory optimization to avoid the large dataframes being kept in memory.
+* Line 2 creates a binary representation of the DataFrame 'cand' and stores it on disk. This is a memory optimization to avoid the large dataframes being kept in memory. Since we are using a cluster, each node will have its own disk. Each node will be responsible for saving its own partitions of 'cand'.
 * Line 3 creates a feature vector for each tuple pair in the cand set.
 * Line 4 ensures that fvs is the correct datatype (vector or array), fills in NaN values, and saves the feature vectors (fvs) in a column called 'features'.
 
