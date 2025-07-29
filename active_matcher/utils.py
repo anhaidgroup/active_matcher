@@ -7,9 +7,13 @@ import numba as nb
 from contextlib import contextmanager
 from pyspark import StorageLevel
 from random import randint
+import pyarrow as pa
+import pyarrow.parquet as pq
 import mmh3
 import sys
 import logging
+import os
+from math import floor
 
 # compression for storage
 compress = zlib.compress
@@ -164,3 +168,168 @@ class PerfectHashFunction:
     
     def hash(self, s):
         return mmh3.hash64(s, self._seed)[0]
+
+
+# Training Data Persistence Utilities
+def save_training_data_streaming(new_batch, parquet_file_path, logger=None):
+    """Save training data using streaming writes for efficiency
+    
+    This method appends new labeled pairs to an existing parquet file without
+    loading the entire dataset into memory. Each labeled pair is saved immediately.
+    
+    Parameters
+    ----------
+    new_batch : pandas.DataFrame
+        New batch of labeled data to append (columns: _id, id1, id2, label)
+    parquet_file_path : str
+        Path to save the parquet file
+    logger : logging.Logger, optional
+        Logger instance for logging messages
+    """
+    if logger is None:
+        logger = get_logger(__name__)
+        
+    # Ensure we only save the essential columns in consistent order
+    required_columns = ['_id', 'id1', 'id2', 'features', 'label']
+    new_batch_clean = new_batch[required_columns].copy()
+        
+    try:
+        table = pa.Table.from_pandas(new_batch_clean)
+        
+        if os.path.exists(parquet_file_path):
+            # Read existing data and append
+            existing_table = pq.read_table(parquet_file_path)
+            # Ensure existing data has same columns
+            existing_df = existing_table.to_pandas()
+            existing_df_clean = existing_df[required_columns].copy()
+            existing_table_clean = pa.Table.from_pandas(existing_df_clean)
+            
+            combined_table = pa.concat_tables([existing_table_clean, table])
+            pq.write_table(combined_table, parquet_file_path)
+            logger.info(f'Appended {len(new_batch)} labeled pairs to '
+                       f'{parquet_file_path}')
+        else:
+            # Create new file
+            pq.write_table(table, parquet_file_path)
+            logger.info(f'Created new training data file: {parquet_file_path}')
+            
+
+    except Exception as e:
+        logger.warning(f'Streaming save failed: {e}, falling back to pandas save')
+        _save_with_pandas(new_batch_clean, parquet_file_path, logger)
+
+
+def load_training_data_streaming(parquet_file_path, logger=None):
+    """Load training data from a parquet file.
+    
+    Parameters
+    ----------
+    parquet_file_path : str
+        Path to the parquet file
+    logger : logging.Logger, optional
+        Logger instance for logging messages
+        
+    Returns
+    -------
+    pandas.DataFrame or None
+        Training data if file exists, None otherwise
+    """
+    if logger is None:
+        logger = get_logger(__name__)
+        
+    try:
+        import pyarrow.parquet as pq
+        
+        if os.path.exists(parquet_file_path):
+            # Read all data efficiently
+            table = pq.read_table(parquet_file_path)
+            training_data = table.to_pandas()
+            
+            logger.info(f'Loaded {len(training_data)} labeled pairs from '
+                       f'{parquet_file_path}')
+            return training_data
+        return None
+        
+    except Exception as e:
+        logger.warning(f'Streaming load failed: {e}, falling back to pandas read')
+        return _load_with_pandas(parquet_file_path, logger)
+
+
+def _save_with_pandas(training_data, parquet_file_path, logger):
+    """Fallback save method using pandas"""
+    try:
+        if os.path.exists(parquet_file_path):
+            # Read existing data and append
+            existing_data = pd.read_parquet(parquet_file_path)
+            combined_data = pd.concat([existing_data, training_data], 
+                                    ignore_index=True)
+            combined_data.to_parquet(parquet_file_path, index=False)
+        else:
+            training_data.to_parquet(parquet_file_path, index=False)
+        logger.info(f'Saved {len(training_data)} labeled pairs to '
+                   f'{parquet_file_path}')
+    except Exception as e:
+        logger.warning(f'Pandas save failed: {e}')
+
+
+def _load_with_pandas(parquet_file_path, logger):
+    """Fallback load method using pandas"""
+    try:
+        if os.path.exists(parquet_file_path):
+            training_data = pd.read_parquet(parquet_file_path)
+            logger.info(f'Loaded {len(training_data)} labeled pairs from '
+                       f'{parquet_file_path}')
+            return training_data
+        return None
+    except Exception as e:
+        logger.warning(f'Pandas load failed: {e}')
+        return None
+
+
+def adjust_iterations_for_existing_data(existing_data_size, n_fvs, batch_size, max_iter):
+    """Calculate remaining iterations based on existing data and constraints
+    
+    This function is designed for batch active learning where iterations
+    correspond to discrete batches of labeled examples.
+    
+    Parameters
+    ----------
+    existing_data_size : int
+        Number of existing labeled examples
+    n_fvs : int
+        Total number of feature vectors
+    batch_size : int
+        Number of examples per batch
+    max_iter : int
+        Maximum number of iterations
+        
+    Returns
+    -------
+    int
+        Adjusted number of iterations
+    """
+    completed_iterations = floor(existing_data_size / batch_size)
+    remaining_iterations = max_iter - completed_iterations    
+    return max(0, remaining_iterations)
+
+
+def adjust_labeled_examples_for_existing_data(existing_data_size, max_labeled):
+    """Calculate remaining labeled examples for continuous active learning
+    
+    This function is designed for continuous active learning where we track
+    the total number of labeled examples rather than iterations.
+    
+    Parameters
+    ----------
+    existing_data_size : int
+        Number of existing labeled examples
+    max_labeled : int
+        Maximum number of examples to label
+        
+    Returns
+    -------
+    int
+        Remaining number of examples that should be labeled
+    """
+    remaining_examples = max_labeled - existing_data_size
+    return max(0, remaining_examples)
