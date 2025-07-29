@@ -82,7 +82,27 @@ Here '_id' is the name of the ID columns for Tables A and B. This labeler will d
 
 #### Using the Web Labeler
 
-***Dev will provide text for this one***
+We have provided a Web-based labeler that the user can use to label tuple pairs when running ActiveMatcher. Specifically, when the Spark process underlying ActiveMatcher needs to label tuple pairs, it sends these pairs to a Flask-based Web server, which in turn sends these pairs to a Streamlit GUI, where the user can label. The labeled pairs are sent back to the Flaks Web server, which in turn sends them back to the Spark process. 
+
+The Flask-based Web server and the Streamlit GUI are hosted on the users local machine. 
+
+To use this Web labeler, put the following code into the Python file:
+```
+from active_matcher.labeler import WebUILabeler
+
+labeler = WebUILabeler(a_df=A, b_df=B, id_col:'_id', flask_port=5005, streamlit_port=8501, flask_host='127.0.0.1')
+```
+To explain the above paramaters: 
+* Here '_id' is the name of the ID columns for Tables A and B.
+* The 'flask_port' will be the port number for the Flask server to run on. The 'streamlit_port' will be the port number for the Streamlit app to be run on.
+* Unless you have other processes running on port 5005 and/or 8501, there should be no need to change the default arguments for 'flask_port' or 'streamlit_port'. It is important that the 'flask_port' and 'streamlit_port' are two distinct values. You may not set them both to the same value.
+* Next, 'flask_host' is the IP where the Flask server should be running. By using the default value of '127.0.0.1', we are running the Flask server locally. This means that only processes on the same machine can call the Flask endpoints (which is fine for this example).
+
+The Streamlit UI will be run on 0.0.0.0, and you will be able to access it from your machine.
+
+On your local machine you can open 127.0.0.1:{streamlit_port} in the browser of your choice to see the Web UI.
+
+The Web UI will display a pair of tuples (x,y), side by side, then ask you to specify if x and y match, or do not match, or if you are unsure. It then displays the next pair of tuples, and so on. 
 
 #### Using the Gold Labeler
 
