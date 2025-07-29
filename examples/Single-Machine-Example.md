@@ -190,7 +190,8 @@ The above training process stops when we have finished 'max_iter=50' iterations,
    
 ### Step 13: Applying the Trained Matcher
 
-We can now apply the trained matcher to the feature vectors in the candidate set, outputting the binary prediction into a fvs['prediction'] and the confidence score of the prediction to fvs['condifidence']. **Dev adds something to explain the conf score**
+We can now apply the trained matcher to the feature vectors in the candidate set, outputting the binary prediction into a fvs['prediction'] and the confidence score of the prediction to fvs['condifidence']. The binary prediction will be either 1.0 or 0.0. 1.0 implies that the model predicts two records are a match, and 0.0 implies that the model predicts two records are not a match. Then, the confidence score is in the range of \[0.50, 1.0\]. The confidence score is the models estimation of the probability that the 'prediction' is correct. For example if 'prediction' is 1.0 and 'confidence' is .85, then the model is 85% confident that two records are a match. On the other hand, if 'prediction' is 0.0 and 'confidence' is .85, then the model is 85% confident that two records do not match.
+
 ```
 fvs = trained_model.predict(fvs, 'features', 'prediction')
 fvs = trained_model.prediction_conf(fvs, 'features', 'confidence')
@@ -219,7 +220,7 @@ f'''
 
 ### Step 14: Running the Python Program
 
-You have finished writing a Python program for matching with ActiveMatcher. To run this program, open a terminal and navigate to the directory that you wrote your 'am_example.py' file in. Then run the following command, which will output true_positives, 'precision', 'recall', and 'f1':
+You have finished writing a Python program for matching with ActiveMatcher. To run this program, open a terminal and navigate to the directory that you wrote your 'am_example.py' file in. Then run the following command, which will output 'true_positives', 'precision', 'recall', and 'f1':
 
 ```
 python3 am_example.py
