@@ -18,6 +18,8 @@ For small to moderate size tables, the above basic mode works well. But for larg
 
 This means that after the user has labeled say 10 examples in an iteration, he or she would need to wait 3-10 minutes before a set of 10 new examples becomes available for the user to label. This is not a good user experience, and results in a long wait time. If the user has to label for 50 iterations, the wait time alone is already 150 minutes or more. 
 
+ActiveMatcher provides two solutions to the above problem: Sampling and Continuous Labeling, which we describe below. ***How can these be combined? Can we do CL without sampling?***
+
 #### Solution: Sampling
 The advanced mode tries to solve this problem. It takes a sample (of a much smaller size) from the candidate set, then performs active learning only on the sample. For example, if the candidate set has 100M examples, then ActiveMatcher takes a sample S of only 5M examples, then performs active learning on S. That is, in Step 2 of each iteration, it applies the trained matcher to just the 5M examples in S, not to all 100M examples in the candidate set. This incurs far less time. 
 
