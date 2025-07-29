@@ -72,7 +72,7 @@ ActiveMatcher uses a labeler to label a candidate tuple pair as match or non-mat
 
 #### Using the Web Labeler
 
-We have provided a Web-based labeler that the user can use to label tuple pairs when running ActiveMatcher on a cluster of machines. Specifically, when the Spark process underlying ActiveMatcher needs to label tuple pairs, it sends these pairs to a Flask-based Web server, which in turn sends these pairs to a Streamlit GUI, where the user can label. The labeled pairs are sent back to the Flaks Web server, which in turn sends them back to the Spark process. 
+We have provided a Web-based labeler that the user can use to label tuple pairs when running ActiveMatcher on a cluster of machines. Specifically, when the Spark process underlying ActiveMatcher needs to label tuple pairs, it sends these pairs to a Flask-based Web server, which in turn sends these pairs to a Streamlit GUI, where the user can label. The labeled pairs are sent back to the Flask Web server, which in turn sends them back to the Spark process. 
 
 The Flask-based Web server and the Streamlit GUI are hosted on the machine on which the user originally submitted the Spark job embodying ActiveMatcher. In this example, this machine is the Spark master node. 
 
