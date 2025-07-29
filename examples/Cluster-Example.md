@@ -86,7 +86,7 @@ To explain the above paramaters:
 * Here '_id' is the name of the ID columns for Tables A and B.
 * The 'flask_port' will be the port number for the Flask server to run on. The 'streamlit_port' will be the port number for the Streamlit app to be run on.
 * Unless you have other processes running on port 5005 and/or 8501, there should be no need to change the default arguments for 'flask_port' or 'streamlit_port'. It is important that the 'flask_port' and 'streamlit_port' are two distinct values. You may not set them both to the same value.
-* Next, 'flask_host' is the IP where the Flask server should be running. ***By using the default value of '127.0.0.1', we are running the Flask server locally on the node where you submitted the Spark job (which is the master node in this example). This means that only processes on the same node can call the Flask endpoints (which is fine for this example).***
+* Next, 'flask_host' is the IP where the Flask server should be running. By using the default value of '127.0.0.1', we are running the Flask server locally on the node where you submitted the Spark job (which is the master node in this example). This means that only processes on the same node can call the Flask endpoints (which is fine for this example).
 
 The Streamlit UI will be run on 0.0.0.0 from the master node. This makes the UI accessible via the master node's public IP. (Again, we assume here that the master node is where you submitted your Spark job.) 
 
