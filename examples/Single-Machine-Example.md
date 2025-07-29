@@ -98,7 +98,7 @@ Such simulated active learning using gold is very useful for code development, d
 
 #### Using Other Labelers
 
-Currently we do not provide more labelers. But you can extend the labeling code in ActiveMatcher to create more powerful labelers. You can do this by subclassing the Labeler class (see the Web Labeler for an example of subclassing). 
+Currently we do not provide more labelers. But you can extend the labeling code in ActiveMatcher to create more powerful labelers. You can do this by subclassing the Labeler class (see the CLI Labeler for an example of subclassing). 
  
 ### Step 7: Creating a Machine Learning Model to Serve as the Matcher
 
