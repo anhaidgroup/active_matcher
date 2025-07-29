@@ -11,7 +11,7 @@ First we download the datasets from GitHub. Navigate to the [dblp_acm folder](ht
 
 ### Step 2: Create a Python File
 
-Within the 'dblp_acm' directory, create a file called 'example.py'. As we walk through the subsequent steps, we will add code to this file. 
+Within the 'dblp_acm' directory, create a file called 'am_example.py'. As we walk through the subsequent steps, we will add code to this file. 
 
 ### Step 3: Import the Dependencies
 
@@ -82,7 +82,7 @@ Here '_id' is the name of the ID columns for Tables A and B. This labeler will d
 
 #### Using the Web Labeler
 
-****Dev will provide text for this one****
+***Dev will provide text for this one***
 
 #### Using the Gold Labeler
 
@@ -132,7 +132,7 @@ selector = FeatureSelector(extra_features=False)
 
 features = selector.select_features(A.drop('_id'), B.drop('_id'))
 ```
-The above code snippet will create features that compute similarity scores between the attributes of Table A and Table B. For example, a feature may compute the Jaccard score between A.name and B.name, after the names have been tokenized into sets of 3-grams. Another feature may compute the TF/IDF score between A.address and B.address, and so on. ActiveMatcher uses heuristics to examine the attributes of Tables A and B and automatically generate these features. 
+The above code snippet will create features that compute similarity scores between the attributes of Table A and Table B. For example, a feature may compute the Jaccard score between A.name and B.name, after the names have been tokenized into sets of 3-grams. Another feature may compute the TF/IDF score between A.address and B.address, and so on. *ActiveMatcher uses heuristics to examine the attributes of Tables A and B and automatically generate these features.*
 
 Note that in the above code snippet, we pass 'extra_features=False' to FeatureSelector. If we set 'extra_features=True', ActiveMatcher will generate even more features. This may improve the ML model's accuracy, but will increase the time to generate the feature vectors and to perform active learning. 
 
@@ -180,7 +180,11 @@ trained_model = active_learner.train(fvs, seeds)
 In the above code 
 * We ask the user to label the selected seeds (as matches or non-matches), using the labeler 'labeler'.
 * Then we use the labeled seeds to train the matcher specified in 'model' (which is a ML classifier in this case).
-* Then we perform up to 'max_iter=50' iterations. In each iteration we apply the trained matcher to all feature vectors (in the candidate set) to predict them as matches/non-matches, use these predictions to select the top 'batch_size=10' most informative tuple pairs, ask the user to label these selected tuple pairs as matches/non-matches, then re-train the matcher using *all* tuple pairs that have been labeled so far.
+* Then we perform up to 'max_iter=50' iterations. In each iteration
+  + we apply the trained matcher to all feature vectors (in the candidate set) to predict them as matches/non-matches,
+  + use these predictions to select the top 'batch_size=10' most informative tuple pairs,
+  + ask the user to label these selected tuple pairs as matches/non-matches,
+  + then re-train the matcher using *all* tuple pairs that have been labeled so far.
 
 The above training process stops when we have finished 'max_iter=50' iterations, or when we have run out of tuple pairs to select. In any case, we return the matcher that has been trained with all tuple pairs that have been labeled. 
    
