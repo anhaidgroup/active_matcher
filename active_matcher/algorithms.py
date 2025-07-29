@@ -2,7 +2,9 @@ import pyspark
 import pyspark.sql.functions as F
 from pyspark.sql.window import Window
 import pandas as pd
-from active_matcher.utils import type_check
+from active_matcher.utils import (
+    type_check, save_training_data_streaming, load_training_data_streaming
+)
 from active_matcher.labeler import Labeler, WebUILabeler
 import logging
 
@@ -61,7 +63,8 @@ def down_sample(fvs, percent, score_column='score', search_id_column='id2', buck
     return fvs
 
 
-def select_seeds(fvs, nseeds, labeler, score_column='score'):
+def select_seeds(fvs, nseeds, labeler, score_column='score', 
+                parquet_file_path='active-matcher-training-data.parquet'):
     """
     down sample fvs by score_column, producing fvs.count() * percent rows
 
@@ -81,14 +84,37 @@ def select_seeds(fvs, nseeds, labeler, score_column='score'):
     labeler : Labeler
         the labeler that will be used to label the seeds
 
+    parquet_file_path : str
+        path to save/load training data parquet file
+
     """
     type_check(fvs, 'fvs', pyspark.sql.DataFrame)
     type_check(score_column, 'score_column', (str, pyspark.sql.Column))
     type_check(nseeds, 'nseeds', int)
     type_check(labeler, 'labeler', Labeler)
+    type_check(parquet_file_path, 'parquet_file_path', str)
 
     if isinstance(score_column, str):
         score_column = F.col(score_column)
+
+    # Load existing training data if available
+    existing_training_data = load_training_data_streaming(parquet_file_path, log)
+    
+    if existing_training_data is not None:
+        log.info(f'Found {len(existing_training_data)} existing labeled examples')
+        # Check if we already have enough seeds
+        if len(existing_training_data) >= nseeds:
+            log.info(f'Already have {len(existing_training_data)} labeled examples, returning existing data')
+            return existing_training_data.head(nseeds)
+        else:
+            log.info(f'Using {len(existing_training_data)} existing examples, need {nseeds - len(existing_training_data)} more')
+            seeds = existing_training_data.to_dict('records')
+            pos_count = existing_training_data['label'].sum()
+            neg_count = len(existing_training_data) - pos_count
+    else:
+        seeds = []
+        pos_count = 0
+        neg_count = 0
 
     # TODO handle edge cases
     fvs = fvs.filter((~F.isnan(score_column)) & (score_column.isNotNull()))
@@ -103,14 +129,12 @@ def select_seeds(fvs, nseeds, labeler, score_column='score'):
                     .limit(nseeds)\
                     .toPandas()\
                     .iterrows()
-    pos_count = 0
-    neg_count = 0
-    seeds = []
+
     # iteratively label vectors, attempt to produce a 
     # set 50% positive 50% negative set 
     i = 0
     if isinstance(labeler, WebUILabeler):
-        log.warning(f"Ready for seeds to be labeled. Go to {labeler.streamlit_url} to begin.")
+        log.warning(f"Ready for seeds to be labeled.")
     
     while pos_count + neg_count < nseeds and i < nseeds * 2:
         try:
@@ -130,6 +154,11 @@ def select_seeds(fvs, nseeds, labeler, score_column='score'):
 
             ex['label'] = label
             seeds.append(ex)
+            
+            # Save the newly labeled seed immediately
+            new_seed_df = pd.DataFrame([ex])
+            save_training_data_streaming(new_seed_df, parquet_file_path, log)
+            
         except StopIteration:
             log.warning("Ran out of examples before reaching nseeds")
             break
