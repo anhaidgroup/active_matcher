@@ -212,5 +212,6 @@ In order to run this on a cluster, we can use the following command from the roo
 ```
 spark/bin/spark-submit \
   --master {url of Spark Master} \
+  --deploy-mode client
   /home/ubuntu/dblp_acm/example.py
 ```
