@@ -13,7 +13,7 @@ To explain these files:
 
 ### Step 2: Create a Python File
 
-On the master node, in the 'dblp_acm' directory, create a file called 'cluster_am_example.py'. As we walk through the subsequent steps, we will add code to this file. 
+On the master node, in the 'dblp_acm' directory, create a file called 'am_cluster_example.py'. As we walk through the subsequent steps, we will add code to this file. 
 
 ### Step 3: Import the Dependencies
 
@@ -57,7 +57,7 @@ spark =  SparkSession.builder\
 Once we have the SparkSession initialized, we can read in the tables along with our candidate set.
 
 ```
-data_dir = Path('/home/ubuntu/dblp_acm')
+data_dir = Path(__file__).resolve().parent
 A = spark.read.parquet(str(data_dir / 'table_a.parquet'))
 B = spark.read.parquet(str(data_dir / 'table_b.parquet'))
 cand = spark.read.parquet(str(data_dir / 'cand.parquet'))
@@ -116,73 +116,104 @@ Such simulated active learning using gold is very useful for code development, d
 
 Currently we do not provide more labelers. But you can extend the labeling code in ActiveMatcher to create more powerful labelers. You can do this by subclassing the Labeler class (see the Web Labeler for an example of subclassing). 
 
-### Step 7: Creating a Model
+### Step 7: Creating a Machine Learning Model to Serve as the Matcher
 
-Next we can choose a model to train. In this example we are using XGBClassifier. Notice that we pass the type of model, not a model instance. Additionally, we can pass model specific keyword args as we would when constructing the model normally, in this case we passed,
+Next we specify a machine learning (ML) classification model to serve as the matcher. Here we will use XGBClassifier, which exposes an SKLearn model interface. In general, you can select any classification model that you believe will fit your data well and exposes an SKLearn or SparkML model interface. 
+ 
+SKLearn model options are described [here](https://scikit-learn.org/stable/supervised_learning.html), and SparkML model options are described [here](https://spark.apache.org/docs/latest/ml-classification-regression.html). Note that even though XGBClassifier exposes an SKLearn model interface, it is not included in the SKLearn package and so is not described there. See instead its documentation [here](https://xgboost.readthedocs.io/en/stable/index.html). 
 
-eval_metric='logloss', objective='binary:logistic', max_depth=6, seed=42
-Note that while we use XGBClassifier in this example, most any model that exposes a scikit-learn interface should work with two important caveats.
-
-Model Training and Inference Time
-First, for each iteration in active learning, requries training a new model and then applying the model to each feature vector we are doing active learning on. This means that if model training and/or inference are slow, the active learning process will be very slow.
-
-Model Threading
-Second, many algorithms use multiple threads for training and inference. Since training takes place on the spark driver node, it is okay if model training with multiple threads. For inference the model should not use multiple threads as it will cause significant over subscription of the processor and lead to extremely slow model inference times (including during active learning). Fortunately, sklearn provides an easy way to disable threading using threadpoolctl, SKLearnModel automatically disables threading for inference using threadpoolctl meaning that sklearn models shouldn't require any modification and can be passed to SKLearnModel unchanged.
-
+To continue with our example, the following code specifies the XGBClassifier model: 
 ```
 model = SKLearnModel(XGBClassifier, eval_metric='logloss', objective='binary:logistic', max_depth=6, seed=42)
 ```
+Note that we pass the type of model (XGBClassifier), not a model instance. Additionally, we pass model-specific keyword args as we would when constructing the model normally. In this case we passed
+```
+eval_metric='logloss', objective='binary:logistic', max_depth=6, seed=42
+```
+#### Avoid Models with Slow Training and/or Inference
+Each iteration in the active learning process requires training a new model and then applying that model to each feature vector we are doing active learning on. So you should avoid using a model where training and/or inference (that is, model application) are slow, otherwise the active learning process will be slow. Use such a model only if you think the benefits (for example, higher accuracy) will outweigh the long runtime. 
 
-## Step 8: Selecting Features
+#### Avoid Threading for SKLearn Models
+You do not need to take any action here. This part is only for your information. Many ML models use multiple threads for inference. However, SKLearn models appear to have a problem using multiple threads for inference. So this should be disabled. 
 
-With all of that set up, we can now select features that we will use to generate feature vectors for each pair in cand. Here we use the default typical set of features, however extra_features can be set to True which will cause the code to generate significantly more features, and likely improve model accuracy at the cost of increased runtime for feature vector generation and active learning.
+Fortunately, SKLearn provides an easy way to disable threading using threadpoolctl. In the ActiveMatcher code, SKLearnModel automatically disables threading for inference using threadpoolctl. So SKLearn models do not require any modification and can be passed to SKLearnModel unchanged. If you want to read more about this issue, see [this document](https://scikit-learn.org/stable/computing/parallelism.html#oversubscription-spawning-too-many-threads).
 
+The above threading issue is specific to SKLearn models. It does not affect SparkML models.
+
+### Step 8: Creating Features for the ML Model
+
+We now create a set of features. In the next step we will use these features to convert each pair of tuples (x,y) in the candidate set into a feature vector. We use the following code to create the features: 
 ```
 selector = FeatureSelector(extra_features=False)
 
 features = selector.select_features(A.drop('_id'), B.drop('_id'))
 ```
+The above code snippet will create features that compute similarity scores between the attributes of Table A and Table B. For example, a feature may compute the Jaccard score between A.name and B.name, after the names have been tokenized into sets of 3-grams. Another feature may compute the TF/IDF score between A.address and B.address, and so on. *ActiveMatcher uses heuristics to examine the attributes of Tables A and B and automatically generate these features.*
 
-## Step 9: Generating Feature Vectors
+Note that in the above code snippet, we pass 'extra_features=False' to FeatureSelector. If we set 'extra_features=True', ActiveMatcher will generate even more features. This may improve the ML model's accuracy, but will increase the time to generate the feature vectors and to perform active learning. 
 
-Now that we have selected features, we can generate feature vectors for each pair in cand. First we need to build the features and then we can generate the actual feature vectors.
+### Step 9: Creating the Feature Vectors
 
+Now we use the features created in the previous step to convert all tuple pairs in the candidate set into feature vectors:
 ```
-fv_gen = FVGenerator(features)
-fv_gen.build(A, B)
-fvs = fv_gen.generate_fvs(cand)
-fvs = model.prep_fvs(fvs, 'features')
+fv_gen = FVGenerator(features) 
+fv_gen.build(A, B) 
+fvs = fv_gen.generate_fvs(cand) 
+fvs = model.prep_fvs(fvs, 'features') 
 ```
+In the above code snippet
+* Line 1 creates an FVGenerator object with the features previously created.
+* Line 2 creates a binary representation of the DataFrame 'cand' and stores it on disk. This is a memory optimization to avoid the large dataframes being kept in memory.
+* Line 3 creates a feature vector for each tuple pair in the cand set.
+* Line 4 ensures that fvs is the correct datatype (vector or array), fills in NaN values, and saves the feature vectors (fvs) in a column called 'features'.
 
-## Step 10: Selecting Seeds
+### Step 10: Scoring the Feature Vectors
 
-Once we have the feature vectors, we can select seeds for active learning, for this operation we need to score each pair which is positively correlated with being a match. That is the higher the score for the pair the more likely it is to be a match. In this example, we just take the sum of all the components of the feature vector for each pair.
+Next we compute a score for each feature vector, such that the higher the score, the more likely that it is a match. Later we will use these scores to select a set of seeds for active learning, and optionally to obtain a sample of the candidate set for active learning. 
 
+Here we compute the score of each feature vector to be the sum of all components of that vector. This is based on the heuristic that each component of a vector is a similarity score (such as Jaccard, cosine), so the higher the sum of these similarity scores, the more likely that the feature vector is a match (that is, the tuple pair corresponding to this vector is a match): 
 ```
 fvs = fvs.withColumn('score', F.aggregate('features', F.lit(0.0), lambda acc, x : acc + F.when(x.isNotNull() & ~F.isnan(x), x).otherwise(0.0) ))
-seeds = select_seeds(fvs, 50, labeler, 'score')
 ```
 
-## Step 11: Training the Model with Active Learning
+### Step 11: Selecting Seeds
 
-Next we run active learning, for at most 50 iterations with a batch size of 10. This process will then output a trained model.
+Next we select a small set of tuple pairs that we will label. This set of tuple pairs will serve as "seeds" to start the active learning process. Specifically, we will use these seeds to train an initial matcher. Then we use the matcher to look for unlabeled "informative" tuple pairs, then we ask the user to label those pairs and retrain the matcher, and so on. 
 
+We select a set of 50 seeds as follows:
+```
+seeds = select_seeds(fvs, 50, labeler, 'score')
+```
+Here the scores that we have computed in the previous step are stored in the column 'score'. We select 25 feature vectors that have the highest scores (so they are most likely to be matches) and 25 feature vectors that have the lowest scores (so they are likely to be non-matches). 
+
+### Step 12: Using Active Learning to train the Matcher
+
+We now use active learning to train the matcher by adding the following code to the Python file:  
 ```
 active_learner = EntropyActiveLearner(model, labeler, batch_size=10, max_iter=50)
 trained_model = active_learner.train(fvs, seeds)
 ```
+In the above code 
+* We ask the user to label the selected seeds (as matches or non-matches), using the labeler 'labeler'.
+* Then we use the labeled seeds to train the matcher specified in 'model' (which is a ML classifier in this case).
+* Then we perform up to 'max_iter=50' iterations. In each iteration
+  + we apply the trained matcher to all feature vectors (in the candidate set) to predict them as matches/non-matches,
+  + use these predictions to select the top 'batch_size=10' most informative tuple pairs,
+  + ask the user to label these selected tuple pairs as matches/non-matches,
+  + then re-train the matcher using *all* tuple pairs that have been labeled so far.
 
-## Step 12: Applying the Trained Model
+The above training process stops when we have finished 'max_iter=50' iterations, or when we have run out of tuple pairs to select. In any case, we return the matcher that has been trained with all tuple pairs that have been labeled so far. 
 
-We can then apply the trained model to the feature vectors, outputting the binary prediction into a fvs['prediction'] and the confidence of the prediction to fvs['condifidence'].
+### Step 13: Applying the Trained Matcher
+
+We can now apply the trained matcher to the feature vectors in the candidate set, outputting the binary prediction into a fvs['prediction'] and the confidence score of the prediction to fvs['condifidence']. The binary prediction will be either 1.0 or 0.0. 1.0 implies that the model predicts two records are a match, and 0.0 implies that the model predicts two records are not a match. Then, the confidence score is in the range of \[0.50, 1.0\]. The confidence score is the models estimation of the probability that the 'prediction' is correct. For example if 'prediction' is 1.0 and 'confidence' is .85, then the model is 85% confident that two records are a match. On the other hand, if 'prediction' is 0.0 and 'confidence' is .85, then the model is 85% confident that two records do not match.
 
 ```
 fvs = trained_model.predict(fvs, 'features', 'prediction')
 fvs = trained_model.prediction_conf(fvs, 'features', 'confidence')
 ```
 
-Finally, we can compute precision, recall, and f1 of the predictions made by the model.
-
+Finally, we can compute precision, recall, and f1 of the predictions made by the matcher:
 ```
 res = fvs.toPandas()
 
@@ -203,7 +234,7 @@ f'''
 )
 ```
 
-## Step 13: Running on a Cluster
+### Step 14: Running on a Cluster
 
 In order to run this on a cluster, we can use the following command from the root directory (you can always get to the root directory by typing `cd` into the terminal). 
 
@@ -213,5 +244,5 @@ In order to run this on a cluster, we can use the following command from the roo
 spark/bin/spark-submit \
   --master {url of Spark Master} \
   --deploy-mode client
-  /home/ubuntu/dblp_acm/example.py
+  /home/ubuntu/dblp_acm/am_cluster_example.py
 ```
