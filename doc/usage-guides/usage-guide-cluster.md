@@ -4,7 +4,7 @@ Here we will walk through an example of running ActiveMatcher on a cluster of ma
 
 ActiveMatcher can be run in either the basic mode or the advanced mode. This document describes the basic mode. We motivate the advanced mode and describe it [here](https://github.com/anhaidgroup/active_matcher/blob/main/doc/usage-guides/usage-guide-advanced-mode.md). If you want to learn the advanced mode for the cluster setting, we recommend 
 * learning the basic mode for the single-machine setting described [here](https://github.com/anhaidgroup/active_matcher/blob/main/doc/usage-guides/usage-guide-local.md) first,
-* then learning the advanced mode for the single-machine setting described [here](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-cloud-based-cluster.md),
+* then learning the advanced mode for the single-machine setting described [here](https://github.com/anhaidgroup/active_matcher/blob/main/doc/usage-guides/usage-guide-advanced-mode.md),
 * then learning the basic mode for the cluster setting described in this document.
 Finally, you can build on the above to learn the advanced mode for the cluster setting. 
 
