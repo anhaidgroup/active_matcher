@@ -2,7 +2,7 @@
 
 ActiveMatcher has two modes: basic and advanced. The default is the basic mode and it works quite well for small to moderate size datasets. For large datasets (for example, tables of 5M+ tuples), you may want to use the advanced mode. Here we explain the difference between the two, then explain how you can use the advanced mode. We first discuss the single-machine setting, then the cluster-of-machines setting. 
 
-### The Advanced Mode in the Single-Machine Setting.
+### The Advanced Mode for the Single-Machine Setting.
 
 #### Motivation
 We describe using ActiveMatcher in the basic mode in the single-machine setting [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md). You may want to study that document and become familiar with the basic mode before continuing with this document. 
