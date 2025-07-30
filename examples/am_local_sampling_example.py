@@ -1,4 +1,5 @@
-# This example shows how to use Active Matcher with Down Sampling.
+# This example shows how to use Active Matcher in the advanced mode for a single-machine setting. 
+# Here we use only sampling, not continuous labeling.
 #Step 3: Import the Dependencies
 import sys
 sys.path.append('.')
@@ -58,7 +59,7 @@ fvs = fvs.withColumn('score', F.aggregate('features', F.lit(0.0), lambda acc, x 
 
 # Down Sampling Step: Sampling the Feature Vectors
 from active_matcher.algorithms import down_sample
-# This sample includes 10% of the feature vectors (0.1)
+# This sample has 10% of the feature vectors (0.1)
 sampled_fvs = down_sample(fvs, 0.1, 'score')
 
 # Step 11: Selecting Seeds
