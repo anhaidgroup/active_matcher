@@ -2,7 +2,7 @@
 
 Here we will walk through an example of running ActiveMatcher on a single machine. In particular, we show how to create a Python program step by step, then execute it. We assume you have installed ActiveMatcher on a single machine, using [this guide](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-single-machine.md).
 
-ActiveMatcher can be run in either the basic mode or the advanced mode. This document describes the basic mode. We motivate the advanced mode and describe it [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/advance-example.md). If you want to learn the advanced mode, we recommend learning the basic mode described in this document first. 
+ActiveMatcher can be run in either the basic mode or the advanced mode. This document describes the basic mode. We motivate the advanced mode and describe it [here](https://github.com/anhaidgroup/active_matcher/blob/main/doc/usage-guides/usage-guide-advanced-mode.md). If you want to learn the advanced mode, we recommend learning the basic mode described in this document first. 
 
 ### Step 1: Download the Datasets
 
