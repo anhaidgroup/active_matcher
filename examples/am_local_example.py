@@ -1,4 +1,4 @@
-# This example shows how to use Active Matcher with the basic settings.
+# This example shows how to use Active Matcher in the basic mode for the local single machine setting
 #Step 3: Import the Dependencies
 import sys
 sys.path.append('.')
@@ -35,7 +35,7 @@ cand = spark.read.parquet(str(data_dir / 'cand.parquet'))
 A.show()
 cand.show()
 
-# Step 6: Specifying a Labeler
+# Step 6: Specifying a Labeler (we use the gold labeler here)
 gold_df = pd.read_parquet(data_dir / 'gold.parquet')
 gold = set(zip(gold_df.id1, gold_df.id2))
 labeler = GoldLabeler(gold)
@@ -59,7 +59,7 @@ fvs = fvs.withColumn('score', F.aggregate('features', F.lit(0.0), lambda acc, x 
 # Step 11: Selecting Seeds
 seeds = select_seeds(fvs, 50, labeler, 'score')
 
-# Step 12: Using Active Learning to Train the Matcher
+# Step 12: Using Active Learning to Train the Matcher (here we only run for 10 iterations)
 active_learner = EntropyActiveLearner(model, labeler, max_iter=10, batch_size=10)
 trained_model = active_learner.train(fvs, seeds)
 
