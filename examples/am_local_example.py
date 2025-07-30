@@ -59,8 +59,8 @@ fvs = fvs.withColumn('score', F.aggregate('features', F.lit(0.0), lambda acc, x 
 # Step 11: Selecting Seeds
 seeds = select_seeds(fvs, 50, labeler, 'score')
 
-# Step 12: Using Active Learning to Train the Matcher (here we only run for 10 iterations)
-active_learner = EntropyActiveLearner(model, labeler, max_iter=10, batch_size=10)
+# Step 12: Using Active Learning to Train the Matcher
+active_learner = EntropyActiveLearner(model, labeler, max_iter=50, batch_size=10)
 trained_model = active_learner.train(fvs, seeds)
 
 # Step 13: Applying the Trained Matcher
