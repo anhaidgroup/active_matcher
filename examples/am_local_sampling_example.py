@@ -66,7 +66,7 @@ sampled_fvs = down_sample(fvs, 0.1, 'score')
 seeds = select_seeds(sampled_fvs, 50, labeler, 'score')
 
 # Step 12: Using Active Learning to Train the Matcher
-active_learner = EntropyActiveLearner(model, labeler, max_iter=10, batch_size=10)
+active_learner = EntropyActiveLearner(model, labeler, max_iter=50, batch_size=10)
 trained_model = active_learner.train(sampled_fvs, seeds)
 
 # Step 13: Applying the Trained Matcher to ALL feature vectors
