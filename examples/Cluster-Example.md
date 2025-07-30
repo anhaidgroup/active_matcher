@@ -1,6 +1,14 @@
-## Running ActiveMatcher on a Cluster of Machines
+## Running ActiveMatcher on a Cluster of Machines (the Basic Mode)
 
 Here we will walk through an example of running ActiveMatcher on a cluster of machines (on AWS). In particular, we show how to create a Python program step by step, then execute it. We assume you have installed ActiveMatcher on a cluster of machines, using [this guide](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-cloud-based-cluster.md).
+
+ActiveMatcher can be run in either the basic mode or the advanced mode. This document describes the basic mode. We motivate the advanced mode and describe it [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/advance-example.md). If you want to learn the advanced mode for the cluster setting, we recommend 
+* learning the basic mode for the single-machine setting described [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md) first,
+* then experiment with the advanced mode for the single-machine setting described [here](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-cloud-based-cluster.md),
+* then experiment with the basic mode for the cluster setting described in this document.
+Finally, you can build on the above to try the advanced mode for the cluster setting. 
+
+We now describe the basic mode for the cluster setting. 
 
 ### Step 1: Download the Datasets
 
@@ -240,7 +248,7 @@ f'''
 
 In order to run this on a cluster, we can use the following command from the root directory (you can always get to the root directory by typing `cd` into the terminal). 
 
-**Note**: This command assumes that the directory structure is the same as ours, and if you followed our installation guides, it will be the same.
+**Note**: This command assumes that the directory structure is the same as ours, and if you followed our installation guide, it will be the same. Otherwise you should change the directory /home/ubuntu/dblp_acm/am_cluster_example.py specified below. 
 
 ```
 spark/bin/spark-submit \
@@ -249,7 +257,10 @@ spark/bin/spark-submit \
   /home/ubuntu/dblp_acm/am_cluster_example.py
 ```
 
-### Additional Notes
+### Additional Discussion
+
+***Fix this part after fixing it in the single machine case***
+
 As labeling occurs in seed selection and active learning, ActiveMatcher saves labeled examples. This way, if a user is unable to complete labeling in one sitting for any reason, ActiveMatcher can load in the examples that have already been labeled. As a default, labeled examples are written to a file called ‘active-matcher-training-data.parquet’ in the directory where the Spark job was submitted on the master node. In our example, this would mean ‘active-matcher-training-data.parquet’ will live within the ‘/home/ubuntu/’ folder on the master node. If you desire, you can change where the training data is saved and loaded from. To do so, pass in an argument called ‘parquet_file_path’ to the select_seeds function and the call to active learning. For example, to use the file name ‘labeled-data.parquet’ instead of ‘active-matcher-training-data.parquet’, the call to select_seeds would be:
 ```
 seeds = select_seeds(fvs, 50, labeler, 'score', parquet_file_path='labeled-data.parquet')
