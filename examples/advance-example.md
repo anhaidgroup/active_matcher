@@ -32,7 +32,8 @@ Of course, ActiveMatcher cannot take a *random* sample S from the candidate set,
 
 ##### Using Sampling 
 
-We now walk you through the steps of using sampling. ***The complete Python file for this case can be found here.***
+We now walk you through the steps of using sampling. The complete Python file for this case can be found [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_local_sampling_example.py).
+
 To use sampling, right after the code to compute a score for each feature vector (Step 10 in the [document](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md) that describes running ActiveMatcher in the basic mode on a single machine), you should add the following code to the Python file: 
 
 ```
@@ -67,7 +68,7 @@ That's it. All other steps remain the same. In particular, note that in Step 13 
 fvs = trained_model.predict(fvs, 'features', 'prediction')
 fvs = trained_model.prediction_conf(fvs, 'features', 'confidence')
 ```
-***The complete Python file in this case can be found here.***
+The complete Python file for this case can be found [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_local_sampling_example.py).
 
 #### Solution 2: Continuous Labeling
 
@@ -84,7 +85,8 @@ We call the previous solution where active learning runs in iteration as doing *
 
 ##### Using Continuous Labeling (CL)
 
-We now walk you through the steps of using CL. ***The complete Python file for this case can be found here.***
+We now walk you through the steps of using CL. The complete Python file for this case can be found [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_local_cal_example.py).
+
 To use CL, replace the code for Step 12 (Using Active Learning to Train the Matcher) of [the document](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md) that describes running ActiveMatcher in the basic mode on a single machine). Specifically, that code is as follows: 
 ```
 active_learner = EntropyActiveLearner(model, labeler, batch_size=10, max_iter=50)
@@ -111,7 +113,7 @@ Here, we do not need to set max_labeled parameter. The active learner will wait 
 
 #### Using Both Solutions
 
-Clearly, we can use both solutions. That is, we take a sample S from the large candidate set, then perform active learning only on S. When we perform active learning on S, we do continuous labeling. ***The complete Python file containing the code for this scenario is here.***
+Clearly, we can use both solutions. That is, we take a sample S from the large candidate set, then perform active learning only on S. When we perform active learning on S, we do continuous labeling. The complete Python file containing the code for this scenario is [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_local_sampling_cal_example.py).
 
 ### The Advanced Mode for the Cluster-of-Machines Setting
 
