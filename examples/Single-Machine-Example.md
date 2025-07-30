@@ -177,7 +177,8 @@ In the above code snippet
 
 ### Step 10: Scoring the Feature Vectors
 
-Next we compute a score for each feature vector, such that the higher the score, the more likely that it is a match. Later we will use these scores to select a set of seeds for active learning, and optionally to obtain a sample of the candidate set for active learning. 
+Next we compute a score for each feature vector, such that the higher the score, the more likely that it is a match. Later we will use these scores to select a set of seeds for active learning (and optionally to obtain a sample of the candidate set for active learning in the 
+advanced mode). 
 
 Here we compute the score of each feature vector to be the sum of all components of that vector. This is based on the heuristic that each component of a vector is a similarity score (such as Jaccard, cosine), so the higher the sum of these similarity scores, the more likely that the feature vector is a match (that is, the tuple pair corresponding to this vector is a match): 
 ```
