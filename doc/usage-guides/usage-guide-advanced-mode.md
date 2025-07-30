@@ -7,7 +7,7 @@ We first discuss the single-machine setting, then the cluster-of-machines settin
 ### The Advanced Mode for the Single-Machine Setting
 
 #### Motivation
-We describe using ActiveMatcher in the basic mode for the single-machine setting [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md). You may want to study that document and become familiar with the basic mode before continuing with this document. 
+We describe using ActiveMatcher in the basic mode for the single-machine setting [here](https://github.com/anhaidgroup/active_matcher/blob/main/doc/usage-guides/usage-guide-local.md). You may want to study that document and become familiar with the basic mode before continuing with this document. 
 
 As that document discusses, in the basic mode, ActiveMatcher executes multiple iterations of active learning. In each iteration, it performs the following steps:
 1. Trains a matcher using all examples that have been labeled so far. 
@@ -34,7 +34,7 @@ Of course, ActiveMatcher cannot take a *random* sample S from the candidate set,
 
 We now walk you through the steps of using sampling. The complete Python file for this case can be found [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_local_sampling_example.py).
 
-To use sampling, right after the code to compute a score for each feature vector (Step 10 in the [document](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md) that describes running ActiveMatcher in the basic mode on a single machine), you should add the following code to the Python file: 
+To use sampling, right after the code to compute a score for each feature vector (Step 10 in the [document](https://github.com/anhaidgroup/active_matcher/blob/main/doc/usage-guides/usage-guide-local.md) that describes running ActiveMatcher in the basic mode on a single machine), you should add the following code to the Python file: 
 
 ```
 from active_matcher.algorithms import down_sample
@@ -87,7 +87,7 @@ We call the previous solution where active learning runs in iteration as doing *
 
 We now walk you through the steps of using CL. The complete Python file for this case can be found [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_local_cal_example.py).
 
-To use CL, replace the code for Step 12 (Using Active Learning to Train the Matcher) of [the document](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md) that describes running ActiveMatcher in the basic mode on a single machine). Specifically, that code is as follows: 
+To use CL, replace the code for Step 12 (Using Active Learning to Train the Matcher) of [the document](https://github.com/anhaidgroup/active_matcher/blob/main/doc/usage-guides/usage-guide-local.md) that describes running ActiveMatcher in the basic mode on a single machine). Specifically, that code is as follows: 
 ```
 active_learner = EntropyActiveLearner(model, labeler, batch_size=10, max_iter=50)
 trained_model = active_learner.train(fvs, seeds)
