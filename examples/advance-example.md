@@ -76,8 +76,32 @@ With a little bit of coordination, bucket Q will never be empty. So the user can
 
 The informative examples that this solution presents to the user (to label) may not be as "informative" as those selected by the solution where active learning runs in iterations. So the user may have to label slightly more examples to obtain the same matching accuracy. Our experiments however show that the difference is negligible, and this solution clearly provides a better user experience, because the user does not have to wait in between labeling for the next example to label. 
 
-#### Using Continuous Labeling
+#### Using Continuous Labeling (CL)
 
+We now walk you through the steps of using CL. ***The complete Python file for this case can be found here.***
+To use CL, replace the code for Step 12 (Using Active Learning to Train the Matcher) of [the document](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md) that describes running ActiveMatcher in the basic mode on a single machine). Specifically, that code is as follows: 
+```
+active_learner = EntropyActiveLearner(model, labeler, batch_size=10, max_iter=50)
+trained_model = active_learner.train(fvs, seeds)
+```
+You should replace it with the following code: 
+```
+from active_matcher.active_learning import ContinuousActiveLearning
+
+active_learner = ContinuousEntropyActiveLearner(model, labeler, max_labeled=550, on_demand_stop=False)
+trained_model = active_learner.train(fvs, seeds)
+```
+
+The max_labeled parameter is the number of examples (including the number of seeds) that the program should label. The on_demand_stop parameter tells the program that it should continue labeling until it reaches max_labeled. ***This sentence is vague***
+
+For example, if you use the CLILabeler, and you are going to label for a set period of time, or until you decide you don't want to label anymore, your call will look like this:
+```
+from active_matcher.active_learning import ContinuousActiveLearning
+
+active_learner = ContinuousEntropyActiveLearner(model, labeler, on_demand_stop=True)
+trained_model = active_learner.train(fvs, seeds)
+```
+Here, we do not need to set max_labeled parameter. The active learner will wait until they receive a stop signal from the command line interface (an input of 's', for stop, from the user).
 
 
    
