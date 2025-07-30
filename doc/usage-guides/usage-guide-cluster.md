@@ -1,9 +1,9 @@
 ## Running ActiveMatcher on a Cluster of Machines (the Basic Mode)
 
-Here we will walk through an example of running ActiveMatcher on a cluster of machines (on AWS). In particular, we show how to create a Python program step by step, then execute it. We assume you have installed ActiveMatcher on a cluster of machines, using [this guide](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-cloud-based-cluster.md).
+Here we will walk through an example of running ActiveMatcher on a cluster of machines (on AWS). In particular, we show how to create a Python program step by step, then execute it. We assume you have installed ActiveMatcher on a cluster of machines, using [this guide](https://github.com/anhaidgroup/active_matcher/blob/main/doc/usage-guides/usage-guide-cluster.md).
 
-ActiveMatcher can be run in either the basic mode or the advanced mode. This document describes the basic mode. We motivate the advanced mode and describe it [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/advance-example.md). If you want to learn the advanced mode for the cluster setting, we recommend 
-* learning the basic mode for the single-machine setting described [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md) first,
+ActiveMatcher can be run in either the basic mode or the advanced mode. This document describes the basic mode. We motivate the advanced mode and describe it [here](https://github.com/anhaidgroup/active_matcher/blob/main/doc/usage-guides/usage-guide-advanced-mode.md). If you want to learn the advanced mode for the cluster setting, we recommend 
+* learning the basic mode for the single-machine setting described [here](https://github.com/anhaidgroup/active_matcher/blob/main/doc/usage-guides/usage-guide-local.md) first,
 * then learning the advanced mode for the single-machine setting described [here](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-cloud-based-cluster.md),
 * then learning the basic mode for the cluster setting described in this document.
 Finally, you can build on the above to learn the advanced mode for the cluster setting. 
@@ -100,7 +100,7 @@ To explain the above paramaters:
 
 The Streamlit UI will be run on 0.0.0.0 from the master node. This makes the UI accessible via the master node's public IP. (Again, we assume here that the master node is where you submitted your Spark job.) 
 
-We now discuss how to get the public IP of any instance (that is, node) of your cluster using the AWS dashboard. We assume that you have set up your cluster using our instructions [here](https://github.com/anhaidgroup/active_matcher/blob/main/doc/installation-guides/install-cloud-based-cluster.md). 
+We now discuss how to get the public IP of any instance (that is, node) of your cluster using the AWS dashboard. We assume that you have set up your cluster using our instructions [here](https://github.com/anhaidgroup/active_matcher/blob/main/doc/usage-guides/usage-guide-cluster.md). 
 * If so, you should navigate to the 'EC2' section of the dashboard. Then, you can select an instance from the list of instances by clicking on the checkbox to the left of its name.
 * When you select an instance on the instance page, an informational panel will appear at the bottom of the page. Switch to the ‘details’ tab and record public IPv4 address of the instance. 
 
