@@ -1,4 +1,4 @@
-# This example shows how to use Active Matcher with a cluster of machines.
+# This example shows how to use Active Matcher in the advanced mode for a cluster of machines.
 # Here we use both sampling and continuous learning.
 # Step 3: Import the Dependencies
 import sys
