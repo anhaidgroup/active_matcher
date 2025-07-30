@@ -13,7 +13,7 @@ First we download the datasets from GitHub. Navigate to the [dblp_acm folder](ht
 
 ### Step 2: Create a Python File
 
-Within the 'dblp_acm' directory, create a file called 'am_local_example.py'. As we walk through the subsequent steps, we will add code to this file. (You can see the complete Python file [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_local_example.py).)
+Within the 'dblp_acm' directory, create a file called 'am_local_example.py'. As we walk through the subsequent steps, we will add code to this file. (You can see the complete Python file [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_local_example.py), and a Jupyter notebook [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_local_example.ipynb).)
 
 ### Step 3: Import the Dependencies
 
