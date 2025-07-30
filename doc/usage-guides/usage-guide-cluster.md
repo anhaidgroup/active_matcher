@@ -246,25 +246,24 @@ f'''
 
 ### Step 14: Running the Python Program
 
-You have finished writing a Python program for matching with ActiveMatcher, using a cluster. (You can see the complete Python file [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_cluster_example.py).)
+You have finished writing a Python program for ActiveMatcher, using a cluster. (You can see the complete Python file [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_cluster_example.py).)
 
-***revise this part***
-In order to run this on a cluster, we can use the following command from the root directory (you can always get to the root directory by typing `cd` into the terminal). 
-
-**Note**: This command assumes that the directory structure is the same as ours, and if you followed our installation guide, it will be the same. Otherwise you should change the directory /home/ubuntu/dblp_acm/am_cluster_example.py specified below. 
-
+To run this program, on the Spark master node, go to the root directory (you can always get to this directory by typing 'cd' into a terminal on the Spark master node). Then execute the following: 
 ```
 spark/bin/spark-submit \
   --master {url of Spark Master} \
   --deploy-mode client
   /home/ubuntu/dblp_acm/am_cluster_example.py
 ```
-
+If you have followed our installation guide, the path /home/ubuntu/dblp_acm/am_cluster_example.py should be correct. Otherwise you should change it to the correct path. Note that the path to the directory dblp_acm must be the same for all nodes in your cluster: master and workers (otherwise the processes on some nodes may not be able to read the data files). 
+ 
 ### Additional Discussion
 
-***Fix this part after fixing it in the single machine case***
+As labeling occurs in seed selection and active learning, ActiveMatcher saves labeled examples. This way, if a user is unable to complete labeling in one sitting for any reason, ActiveMatcher can load in the examples that have already been labeled (as we discuss below).
 
-As labeling occurs in seed selection and active learning, ActiveMatcher saves labeled examples. This way, if a user is unable to complete labeling in one sitting for any reason, ActiveMatcher can load in the examples that have already been labeled. As a default, labeled examples are written to a file called ‘active-matcher-training-data.parquet’ in the directory where the Spark job was submitted on the master node. In our example, this would mean ‘active-matcher-training-data.parquet’ will live within the ‘/home/ubuntu/’ folder on the master node. If you desire, you can change where the training data is saved and loaded from. To do so, pass in an argument called ‘parquet_file_path’ to the select_seeds function and the call to active learning. For example, to use the file name ‘labeled-data.parquet’ instead of ‘active-matcher-training-data.parquet’, the call to select_seeds would be:
+By default, the labeled examples are written to a file called ‘active-matcher-training-data.parquet’ in the directory where the Spark job was submitted on the master node. In our example, this means that ‘active-matcher-training-data.parquet’ will live within the ‘/home/ubuntu/’ folder on the master node. 
+
+You can change where the training data is saved and loaded from. To do so, pass in an argument called ‘parquet_file_path’ to the select_seeds function and the call to active learning. For example, to use the file name ‘labeled-data.parquet’ instead of ‘active-matcher-training-data.parquet’, the call to select_seeds would be:
 ```
 seeds = select_seeds(fvs, 50, labeler, 'score', parquet_file_path='labeled-data.parquet')
 ```
@@ -272,5 +271,10 @@ And the call to the active learner would be:
 ```
 active_learner = EntropyActiveLearner(model, labeler, batch_size=10, max_iter=50, parquet_file_path='labeled-data.parquet')
 ```
-The columns in the parquet are '_id', 'id1', 'id2', 'features', and 'label'. ‘_id’ is an index for the record, ‘id1’ is the id of the record in Table A, ‘id2’ is the id of the record in Table B, ‘features’ is the feature vector for the ‘id1’ and ‘id2’ record, and ‘label’ is a number with 1.0 indicating a match and 0.0 indicating a non-match.
+The columns in the parquet are '_id', 'id1', 'id2', 'features', and 'label'. ‘_id’ is an index for the record pair, ‘id1’ is the id of the record in Table A, ‘id2’ is the id of the record in Table B, ‘features’ is the feature vector for the ‘id1’ and ‘id2’ record, and ‘label’ is a number with 1.0 indicating a match and 0.0 indicating a non-match.
+
+Note that the file that you specify (such as 'labeled-data.parquet') must be a parquet file. In general, the file storing the labeled data (if any) is specified by 'parquet_file_path' (the default value of which is 'active-matcher-training-data.parquet'). So when ActiveMatcher starts, it will look for this file and load the labeled data from the file (if exists). 
+
+Note also that currently we do not save tuple pairs that have been labeled 'unsure' by the user. In the future the code will be modified to also save these tuple pairs. 
+
 
