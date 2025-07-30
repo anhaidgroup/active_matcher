@@ -21,11 +21,13 @@ This means that after the user has labeled say 10 examples in an iteration, he o
 ActiveMatcher provides two solutions to the above problem: Sampling and Continuous Labeling, which we describe below. ***How can these be combined? Can we do CL without sampling?***
 
 #### Solution: Sampling
+
 In this solution we take a sample (of a much smaller size) from the candidate set, then perform active learning only on the sample. For example, if the candidate set has 100M examples, then ActiveMatcher takes a sample S of only 5M examples, then performs active learning on S. That is, in Step 2 of each iteration, it applies the trained matcher to just the 5M examples in S, not to all 100M examples in the candidate set. This incurs far less time. 
 
 Of course, ActiveMatcher cannot take a *random* sample S from the candidate set, because this sample is likely to contain very few true matches, and thus is not a good sample to perform active learning on. Instead, ActiveMatcher tries to ensure that the sample S contains a variety of matches and thus would be a good sample to perform active learning on. 
 
 #### Using Sampling 
+
 We now walk you through the steps of using sampling. ***The complete Python file for this case can be found here.***
 To use sampling, right after the code to compute a score for each feature vector (Step 10 in the [document](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md) that describes running ActiveMatcher in the basic mode on a single machine), you should add the following code to the Python file: 
 
@@ -62,5 +64,20 @@ fvs = trained_model.predict(fvs, 'features', 'prediction')
 fvs = trained_model.prediction_conf(fvs, 'features', 'confidence')
 ```
 ***The complete Python file in this case can be found here.***
+
+#### Solution: Continuous Labeling
+
+In this solution, we get rid of the notion of "iteration". Specifically, we maintain a bucket P of examples that have been labeled so far, and a bucket Q of informative unlabeled examples. We then continuously run two background processes:
+
+1. Whenever the user can label, we take an example from Q, present it to the user to label, then put the labeled example into bucket P.
+2. Whenever bucket P has grown by a certain amount (of newly labeled examples), we retrain a matcher M using all examples in P (recall that all of these examples have been labeled), apply M to the unlabeled examples in the candidate set to select a set of informative examples, say 10, then put these examples into bucket Q.
+
+With a little bit of coordination, bucket Q will never be empty. So the user can label non-stop by just taking examples from Q. When the user has labeled 500-600 examples, say, he or she can stop, terminating the labeling process. We then train a final matcher M using all examples that have been labeled so far (that is, those in bucket P), then apply M to all examples in the candidate set to predict match/no-match. 
+
+The informative examples that this solution presents to the user (to label) may not be as "informative" as those selected by the solution where active learning runs in iterations. So the user may have to label slightly more examples to obtain the same matching accuracy. Our experiments however show that the difference is negligible, and this solution clearly provides a better user experience, because the user does not have to wait in between labeling for the next example to label. 
+
+#### Using Continuous Labeling
+
+
 
    
