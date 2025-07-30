@@ -62,7 +62,7 @@ from active_matcher.algorithms import down_sample
 sampled_fvs = down_sample(fvs, 0.1, 'score')
 
 # Step 11: Selecting Seeds
-seeds = select_seeds(sampled_fvs, 2, labeler, 'score')
+seeds = select_seeds(sampled_fvs, 50, labeler, 'score')
 
 # Step 12: Using Active Learning to Train the Matcher
 active_learner = EntropyActiveLearner(model, labeler, max_iter=10, batch_size=10)

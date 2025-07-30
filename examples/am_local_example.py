@@ -28,7 +28,7 @@ spark =  SparkSession.builder\
 
 # Step 5: Reading the Data
 #path to the data
-data_dir = Path('./data/dblp_acm/')
+data_dir = Path('./')
 A = spark.read.parquet(str(data_dir / 'table_a.parquet'))
 B = spark.read.parquet(str(data_dir / 'table_b.parquet'))
 cand = spark.read.parquet(str(data_dir / 'cand.parquet'))
@@ -57,7 +57,7 @@ fvs = model.prep_fvs(fvs, 'features')
 fvs = fvs.withColumn('score', F.aggregate('features', F.lit(0.0), lambda acc, x : acc + F.when(x.isNotNull() & ~F.isnan(x), x).otherwise(0.0) ))
 
 # Step 11: Selecting Seeds
-seeds = select_seeds(fvs, 2, labeler, 'score')
+seeds = select_seeds(fvs, 50, labeler, 'score')
 
 # Step 12: Using Active Learning to Train the Matcher
 active_learner = EntropyActiveLearner(model, labeler, max_iter=10, batch_size=10)
