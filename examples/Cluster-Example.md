@@ -216,12 +216,12 @@ The above training process stops when we have finished 'max_iter=50' iterations,
 
 ### Step 13: Applying the Trained Matcher
 
-We can now apply the trained matcher to the feature vectors in the candidate set, outputting the binary prediction into a fvs['prediction'] and the confidence score of the prediction to fvs['condifidence']. The binary prediction will be either 1.0 or 0.0. 1.0 implies that the model predicts two records are a match, and 0.0 implies that the model predicts two records are not a match. Then, the confidence score is in the range of \[0.50, 1.0\]. The confidence score is the models estimation of the probability that the 'prediction' is correct. For example if 'prediction' is 1.0 and 'confidence' is .85, then the model is 85% confident that two records are a match. On the other hand, if 'prediction' is 0.0 and 'confidence' is .85, then the model is 85% confident that two records do not match.
-
+We can now apply the trained matcher to the feature vectors in the candidate set, which is stored in 'fvs'. This produces the binary predictions in column fvs['prediction'] and the confidence score of the prediction in column fvs['condifidence']. 
 ```
 fvs = trained_model.predict(fvs, 'features', 'prediction')
 fvs = trained_model.prediction_conf(fvs, 'features', 'confidence')
 ```
+The binary prediction is 1.0 or 0.0. 1.0 implies that the model predicts two records are a match, and 0.0 implies not a match. Then, the confidence score is in the range of \[0.50, 1.0\]. The confidence score is the model's estimation of the probability that the 'prediction' is correct. For example if 'prediction' is 1.0 and 'confidence' is .85, then the model is 85% confident that two records are a match. On the other hand, if 'prediction' is 0.0 and 'confidence' is .85, then the model is 85% confident that two records do not match.
 
 Finally, we can compute precision, recall, and f1 of the predictions made by the matcher:
 ```
@@ -244,8 +244,9 @@ f'''
 )
 ```
 
-### Step 14: Running on a Cluster
+### Step 14: Running the Python Program
 
+You have finished writing a Python program for matching with ActiveMatcher, using a cluster. ***revise this part***
 In order to run this on a cluster, we can use the following command from the root directory (you can always get to the root directory by typing `cd` into the terminal). 
 
 **Note**: This command assumes that the directory structure is the same as ours, and if you followed our installation guide, it will be the same. Otherwise you should change the directory /home/ubuntu/dblp_acm/am_cluster_example.py specified below. 
