@@ -239,12 +239,37 @@ def load_training_data_streaming(parquet_file_path, logger=None):
         
     try:
         import pyarrow.parquet as pq
-        
+        import numpy as np
         if os.path.exists(parquet_file_path):
             # Read all data efficiently
             table = pq.read_table(parquet_file_path)
             training_data = table.to_pandas()
-            
+
+            # Type check and convert columns
+            required_columns = ['_id', 'id1', 'id2', 'features', 'label']
+            for col in required_columns:
+                if col not in training_data.columns:
+                    raise ValueError(f"Missing required column: {col}")
+
+            # Ensure integer columns are int64
+            for col in ['_id', 'id1', 'id2']:
+                if training_data[col].dtype != 'int64':
+                    training_data[col] = training_data[col].astype('int64')
+
+            # Ensure label is float
+            if training_data['label'].dtype != 'float64':
+                training_data['label'] = training_data['label'].astype('float64')
+
+            # Ensure features is a list of floats (array<float>)
+            def to_float_list(x):
+                if isinstance(x, np.ndarray):
+                    return x.astype(float).tolist()
+                elif isinstance(x, list):
+                    return [float(i) for i in x]
+                else:
+                    return list(x)  # fallback, may error if not iterable
+            training_data['features'] = training_data['features'].apply(to_float_list)
+
             logger.info(f'Loaded {len(training_data)} labeled pairs from '
                        f'{parquet_file_path}')
             return training_data
