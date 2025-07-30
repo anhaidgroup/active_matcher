@@ -117,7 +117,7 @@ Clearly, we can use both solutions. That is, we take a sample S from the large c
 
 ### The Advanced Mode for the Cluster-of-Machines Setting
 
-Now that you have seen how the advanced mode works for the single-machine setting, you can generalize in a relatively straightforward fashion to the cluster setting. ***The Python file containing the code for this scenario is here.***
+Now that you have seen how the advanced mode works for the single-machine setting, you can generalize in a relatively straightforward fashion to the cluster setting. The following [Python file](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_cluster_sampling_cal_example.py) shows the code to run ActiveMatcher in the advanced mode using both sampling and continuous labeling for a cluster of machines. 
 
 
    
