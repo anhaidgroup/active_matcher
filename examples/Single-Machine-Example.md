@@ -190,7 +190,7 @@ seeds = select_seeds(fvs, 50, labeler, 'score')
 ```
 Here the scores that we have computed in the previous step are stored in the column 'score'. We select 25 feature vectors that have the highest scores (so they are most likely to be matches) and 25 feature vectors that have the lowest scores (so they are likely to be non-matches). 
 
-### Step 12: Using Active Learning to train the Matcher
+### Step 12: Using Active Learning to Train the Matcher
 
 We now use active learning to train the matcher by adding the following code to the Python file:  
 ```
