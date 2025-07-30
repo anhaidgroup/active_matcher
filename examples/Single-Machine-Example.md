@@ -1,6 +1,8 @@
-## Running ActiveMatcher on a Single Machine
+## Running ActiveMatcher on a Single Machine (the Basic Mode)
 
 Here we will walk through an example of running ActiveMatcher on a single machine. In particular, we show how to create a Python program step by step, then execute it. We assume you have installed ActiveMatcher on a single machine, using [this guide](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-single-machine.md).
+
+ActiveMatcher can be run in either the basic mode or the advanced mode. This document describes the basic mode. We motivate the advanced mode and describe it [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/advance-example.md). If you want to learn the advanced mode, we recommend learning the basic mode described in this document first. 
 
 ### Step 1: Download the Datasets
 
@@ -70,6 +72,8 @@ The candidate set file 'cand.parquet' is a set of rolled up pairs, where cand['i
 
 ActiveMatcher uses a labeler to label a candidate tuple pair as match or non-match. It does this in the step to create a set of seeds for the active learning process and in the step of active learning itself (as we describe soon). 
 
+Currently ActiveMatcher provides a command-line interface (CLI) labeler, a Web-based labeler, and a gold labeler. In what follows we discuss using these labelers. 
+
 #### Using the Command-Line Interface (CLI) Labeler
 
 We have provided a labeler that operates within the command-line interface (CLI). To specify this labeler, you should put the following code into the Python file: 
@@ -82,9 +86,9 @@ Here '_id' is the name of the ID columns for Tables A and B. This labeler will d
 
 #### Using the Web Labeler
 
-We have provided a Web-based labeler that the user can use to label tuple pairs when running ActiveMatcher. Specifically, when the Spark process underlying ActiveMatcher needs to label tuple pairs, it sends these pairs to a Flask-based Web server, which in turn sends these pairs to a Streamlit GUI, where the user can label. The labeled pairs are sent back to the Flask Web server, which in turn sends them back to the Spark process. 
+We have provided a Web-based labeler that the user can use to label tuple pairs when running ActiveMatcher. Specifically, when the Spark process underlying ActiveMatcher needs to label tuple pairs, it sends these pairs to a Flask-based Web server, which in turn sends these pairs to a Streamlit GUI, where the user can label. Once done, the labeled pairs are sent back to the Flask Web server, which in turn sends them back to the Spark process. 
 
-The Flask-based Web server and the Streamlit GUI are hosted on the users local machine. 
+The Flask-based Web server and the Streamlit GUI are hosted on the user's local machine. 
 
 To use this Web labeler, put the following code into the Python file:
 ```
@@ -210,12 +214,12 @@ The above training process stops when we have finished 'max_iter=50' iterations,
    
 ### Step 13: Applying the Trained Matcher
 
-We can now apply the trained matcher to the feature vectors in the candidate set, outputting the binary prediction into a fvs['prediction'] and the confidence score of the prediction to fvs['condifidence']. The binary prediction will be either 1.0 or 0.0. 1.0 implies that the model predicts two records are a match, and 0.0 implies that the model predicts two records are not a match. Then, the confidence score is in the range of \[0.50, 1.0\]. The confidence score is the models estimation of the probability that the 'prediction' is correct. For example if 'prediction' is 1.0 and 'confidence' is .85, then the model is 85% confident that two records are a match. On the other hand, if 'prediction' is 0.0 and 'confidence' is .85, then the model is 85% confident that two records do not match.
-
+We can now apply the trained matcher to the feature vectors in the candidate set, which is stored in 'fvs'. This produces the binary predictions in column fvs['prediction'] and the confidence score of the prediction in column fvs['condifidence']. 
 ```
 fvs = trained_model.predict(fvs, 'features', 'prediction')
 fvs = trained_model.prediction_conf(fvs, 'features', 'confidence')
 ```
+The binary prediction is 1.0 or 0.0. 1.0 implies that the model predicts two records are a match, and 0.0 implies not a match. Then, the confidence score is in the range of \[0.50, 1.0\]. The confidence score is the model's estimation of the probability that the 'prediction' is correct. For example if 'prediction' is 1.0 and 'confidence' is .85, then the model is 85% confident that two records are a match. On the other hand, if 'prediction' is 0.0 and 'confidence' is .85, then the model is 85% confident that two records do not match.
 
 Finally, we can compute precision, recall, and f1 of the predictions made by the matcher:
 ```
@@ -246,8 +250,13 @@ You have finished writing a Python program for matching with ActiveMatcher. To r
 python3 am_local_example.py
 ```
 
-### Additional Notes
-As labeling occurs in seed selection and active learning, ActiveMatcher saves labeled examples. This way, if a user is unable to complete labeling in one sitting for any reason, ActiveMatcher can load in the examples that have already been labeled. As a default, labeled examples are written to a file called ‘active-matcher-training-data.parquet’ in the directory where the Python file for the matching program lives. In our example, this would mean ‘active-matcher-training-data.parquet’ will live within the ‘dblp_acm’ folder. If you desire, you can change where the training data is saved and loaded from. To do so, pass in an argument called ‘parquet_file_path’ to the select_seeds function and the call to active learning. For example, to use the file name ‘labeled-data.parquet’ instead of ‘active-matcher-training-data.parquet’, the call to select_seeds would be:
+### Additional Discussion
+
+As labeling occurs in seed selection and active learning, ActiveMatcher saves labeled examples. This way, if a user is unable to complete labeling in one sitting for any reasons, ActiveMatcher can load in the examples that have already been labeled. (When ActiveMatcher runs, it will check if the ***Revise this part***
+
+By default, the labeled examples are written to a file called ‘active-matcher-training-data.parquet’ in the directory where the Python file for the matching program lives. In our example, this would mean ‘active-matcher-training-data.parquet’ will live within the ‘dblp_acm’ folder. 
+
+You can change where the training data is saved and loaded from. To do so, pass in an argument called ‘parquet_file_path’ to the select_seeds function and the call to active learning. For example, to use the file ‘labeled-data.parquet’ instead of ‘active-matcher-training-data.parquet’, the call to select_seeds would be:
 ```
 seeds = select_seeds(fvs, 50, labeler, 'score', parquet_file_path='labeled-data.parquet')
 ```
