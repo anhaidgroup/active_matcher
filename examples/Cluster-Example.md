@@ -21,7 +21,7 @@ To explain these files:
 
 ### Step 2: Create a Python File
 
-On the master node, in the 'dblp_acm' directory, create a file called 'am_cluster_example.py'. As we walk through the subsequent steps, we will add code to this file. 
+On the master node, in the 'dblp_acm' directory, create a file called 'am_cluster_example.py'. As we walk through the subsequent steps, we will add code to this file. (You can see the complete Python file [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_cluster_example.py).)
 
 ### Step 3: Import the Dependencies
 
@@ -246,7 +246,9 @@ f'''
 
 ### Step 14: Running the Python Program
 
-You have finished writing a Python program for matching with ActiveMatcher, using a cluster. ***revise this part***
+You have finished writing a Python program for matching with ActiveMatcher, using a cluster. (You can see the complete Python file [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_cluster_example.py).)
+
+***revise this part***
 In order to run this on a cluster, we can use the following command from the root directory (you can always get to the root directory by typing `cd` into the terminal). 
 
 **Note**: This command assumes that the directory structure is the same as ours, and if you followed our installation guide, it will be the same. Otherwise you should change the directory /home/ubuntu/dblp_acm/am_cluster_example.py specified below. 

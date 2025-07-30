@@ -1,4 +1,5 @@
-# This example shows how to use Active Matcher with Continuous Active Learning and Down Sampling.
+# This example shows how to use Active Matcher in the advanced mode for the single-machine setting
+# Here we use both sampling and continuous learning
 #Step 3: Import the Dependencies
 import sys
 sys.path.append('.')
@@ -58,7 +59,7 @@ fvs = fvs.withColumn('score', F.aggregate('features', F.lit(0.0), lambda acc, x 
 
 # Down Sampling Step: Sampling the Feature Vectors
 from active_matcher.algorithms import down_sample
-# This sample includes 10% of the feature vectors (0.1)
+# This sample has 10% of the feature vectors (0.1)
 sampled_fvs = down_sample(fvs, 0.1, 'score')
 
 # Step 11: Selecting Seeds
@@ -74,7 +75,7 @@ max_labeled and on_demand_stop.
 max_labeled: This parameter specifies the maximum number of labeled examples to use for training.
 on_demand_stop: This parameter specifies that we should continue labeling until the user manually stops the labeling process.
 
-For simplicity, in this example, we will use max_labeled=500 and on_demand_stop=False, so the algorithm will complete after 500 examples are labeled.
+For simplicity, in this example, we will use max_labeled=500 and on_demand_stop=False, so the algorithm will complete after 500 examples have been labeled.
 """
 from active_matcher.active_learning import ContinuousEntropyActiveLearner
 active_learner = ContinuousEntropyActiveLearner(model, labeler, max_labeled=500, on_demand_stop=False)

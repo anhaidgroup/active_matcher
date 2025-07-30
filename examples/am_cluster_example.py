@@ -1,4 +1,4 @@
-# This example shows how to use Active Matcher with a cluster of machines.
+# This example shows how to use Active Matcher in the basic mode for a cluster of machines
 # Step 3: Import the Dependencies
 import sys
 sys.path.append('.')

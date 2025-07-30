@@ -13,7 +13,7 @@ First we download the datasets from GitHub. Navigate to the [dblp_acm folder](ht
 
 ### Step 2: Create a Python File
 
-Within the 'dblp_acm' directory, create a file called 'am_local_example.py'. As we walk through the subsequent steps, we will add code to this file. 
+Within the 'dblp_acm' directory, create a file called 'am_local_example.py'. As we walk through the subsequent steps, we will add code to this file. (You can see the complete Python file [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_local_example.py).)
 
 ### Step 3: Import the Dependencies
 
@@ -245,7 +245,9 @@ f'''
 
 ### Step 14: Running the Python Program
 
-You have finished writing a Python program for matching with ActiveMatcher. To run this program, open a terminal and navigate to the directory that you wrote your 'am_local_example.py' file in. Then run the following command, which will output 'true_positives', 'precision', 'recall', and 'f1':
+You have finished writing a Python program for matching with ActiveMatcher. You can see the complete Python file [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/am_local_example.py).
+
+To run this program, open a terminal and navigate to the directory that you wrote your 'am_local_example.py' file in. Then run the following command, which will output 'true_positives', 'precision', 'recall', and 'f1':
 
 ```
 python3 am_local_example.py
