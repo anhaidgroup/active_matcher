@@ -20,13 +20,13 @@ This means that after the user has labeled say 10 examples in an iteration, he o
 
 ActiveMatcher provides two solutions to the above problem: Sampling and Continuous Labeling, which we describe below. ***How can these be combined? Can we do CL without sampling?***
 
-#### Solution: Sampling
+#### Solution 1: Sampling
 
 In this solution we take a sample (of a much smaller size) from the candidate set, then perform active learning only on the sample. For example, if the candidate set has 100M examples, then ActiveMatcher takes a sample S of only 5M examples, then performs active learning on S. That is, in Step 2 of each iteration, it applies the trained matcher to just the 5M examples in S, not to all 100M examples in the candidate set. This incurs far less time. 
 
 Of course, ActiveMatcher cannot take a *random* sample S from the candidate set, because this sample is likely to contain very few true matches, and thus is not a good sample to perform active learning on. Instead, ActiveMatcher tries to ensure that the sample S contains a variety of matches and thus would be a good sample to perform active learning on. 
 
-#### Using Sampling 
+##### Using Sampling 
 
 We now walk you through the steps of using sampling. ***The complete Python file for this case can be found here.***
 To use sampling, right after the code to compute a score for each feature vector (Step 10 in the [document](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md) that describes running ActiveMatcher in the basic mode on a single machine), you should add the following code to the Python file: 
@@ -65,7 +65,7 @@ fvs = trained_model.prediction_conf(fvs, 'features', 'confidence')
 ```
 ***The complete Python file in this case can be found here.***
 
-#### Solution: Continuous Labeling
+#### Solution 2: Continuous Labeling
 
 In this solution, we get rid of the notion of "iteration". Specifically, we maintain a bucket P of examples that have been labeled so far, and a bucket Q of informative unlabeled examples. We then continuously run two background processes:
 
@@ -76,7 +76,7 @@ With a little bit of coordination, bucket Q will never be empty. So the user can
 
 The informative examples that this solution presents to the user (to label) may not be as "informative" as those selected by the solution where active learning runs in iterations. So the user may have to label slightly more examples to obtain the same matching accuracy. Our experiments however show that the difference is negligible, and this solution clearly provides a better user experience, because the user does not have to wait in between labeling for the next example to label. 
 
-#### Using Continuous Labeling (CL)
+##### Using Continuous Labeling (CL)
 
 We now walk you through the steps of using CL. ***The complete Python file for this case can be found here.***
 To use CL, replace the code for Step 12 (Using Active Learning to Train the Matcher) of [the document](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md) that describes running ActiveMatcher in the basic mode on a single machine). Specifically, that code is as follows: 
@@ -102,6 +102,12 @@ active_learner = ContinuousEntropyActiveLearner(model, labeler, on_demand_stop=T
 trained_model = active_learner.train(fvs, seeds)
 ```
 Here, we do not need to set max_labeled parameter. The active learner will wait until they receive a stop signal from the command line interface (an input of 's', for stop, from the user).
+
+#### Using Both Solutions
+
+Clearly, we can use both solutions. That is, we take a sample S from the large candidate set, then perform active learning only on S. When we perform active learning on S, we do continuous labeling. ***The complete Python file containing the code for this scenario is here.***
+
+
 
 
    
