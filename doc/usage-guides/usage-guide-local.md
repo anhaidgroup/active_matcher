@@ -255,7 +255,7 @@ python3 am_local_example.py
 
 ### Additional Discussion
 
-As labeling occurs in seed selection and active learning, ActiveMatcher saves labeled examples. This way, if a user is unable to complete labeling in one sitting for any reasons, ActiveMatcher can load in the examples that have already been labeled. (When ActiveMatcher runs, it will check if the ***Revise this part***
+As labeling occurs in seed selection and active learning, ActiveMatcher saves labeled examples. This way, if a user is unable to complete labeling in one sitting for any reasons, ActiveMatcher can load in the examples that have already been labeled (as we discuss below).
 
 By default, the labeled examples are written to a file called ‘active-matcher-training-data.parquet’ in the directory where the Python file for the matching program lives. In our example, this would mean ‘active-matcher-training-data.parquet’ will live within the ‘dblp_acm’ folder. 
 
@@ -268,4 +268,9 @@ And the call to the active learner would be:
 active_learner = EntropyActiveLearner(model, labeler, batch_size=10, max_iter=50, parquet_file_path='labeled-data.parquet')
 ```
 
-The columns in the parquet are '_id', 'id1', 'id2', 'features', and 'label'. ‘_id’ is an index for the record, ‘id1’ is the id of the record in Table A, ‘id2’ is the id of the record in Table B, ‘features’ is the feature vector for the ‘id1’ and ‘id2’ record, and ‘label’ is a number with 1.0 indicating a match and 0.0 indicating a non-match.
+The columns in the parquet are '_id', 'id1', 'id2', 'features', and 'label'. ‘_id’ is an index for the record pair, ‘id1’ is the id of the record in Table A, ‘id2’ is the id of the record in Table B, ‘features’ is the feature vector for the ‘id1’ and ‘id2’ record, and ‘label’ is a number with 1.0 indicating a match and 0.0 indicating a non-match.
+
+Note that the file that you specify (such as 'labeled-data.parquet') must be a parquet file. In general, the file storing the labeled data (if any) is specified by 'parquet_file_path' (the default value of which is 'active-matcher-training-data.parquet'). So when ActiveMatcher starts, it will look for this file and load the labeled data from the file (if exists). 
+
+Note also that currently we do not save tuple pairs that have been labeled 'unsure' by the user. In the future the code will be modified to also save these tuple pairs. 
+
