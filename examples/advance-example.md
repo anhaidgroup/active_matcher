@@ -1,8 +1,10 @@
 ## Running ActiveMatcher in the Advanced Mode
 
-ActiveMatcher has two modes: basic and advanced. The default is the basic mode and it works quite well for small to moderate size datasets. For large datasets (for example, tables of 5M+ tuples), you may want to use the advanced mode. Here we explain the difference between the two, then explain how you can use the advanced mode. We first discuss the single-machine setting, then the cluster-of-machines setting. 
+ActiveMatcher has two modes: basic and advanced. The default is the basic mode and it works quite well for small to moderate size datasets. For large datasets (for example, tables of 5M+ tuples), you may want to use the advanced mode. Here we explain the difference between the two, then explain how you can use the advanced mode. 
 
-### The Advanced Mode for the Single-Machine Setting.
+We first discuss the single-machine setting, then the cluster-of-machines setting. We recommend that you first learn the advanced mode for the single-machine setting, before trying to use it for the cluster setting. 
+
+### The Advanced Mode for the Single-Machine Setting
 
 #### Motivation
 We describe using ActiveMatcher in the basic mode for the single-machine setting [here](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md). You may want to study that document and become familiar with the basic mode before continuing with this document. 
@@ -107,7 +109,9 @@ Here, we do not need to set max_labeled parameter. The active learner will wait 
 
 Clearly, we can use both solutions. That is, we take a sample S from the large candidate set, then perform active learning only on S. When we perform active learning on S, we do continuous labeling. ***The complete Python file containing the code for this scenario is here.***
 
+### The Advanced Mode for the Cluster-of-Machines Setting
 
+Now that you have seen how the advanced mode works for the single-machine setting, you can generalize in a relatively straightforward fashion to the cluster setting. ***The Python file containing the code for this scenario is here.***
 
 
    
