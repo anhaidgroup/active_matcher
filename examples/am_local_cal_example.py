@@ -57,7 +57,7 @@ fvs = model.prep_fvs(fvs, 'features')
 fvs = fvs.withColumn('score', F.aggregate('features', F.lit(0.0), lambda acc, x : acc + F.when(x.isNotNull() & ~F.isnan(x), x).otherwise(0.0) ))
 
 # Step 11: Selecting Seeds
-seeds = select_seeds(sampled_fvs, 2, labeler, 'score')
+seeds = select_seeds(fvs, 50, labeler, 'score')
 
 # Step 12: Using Continuous Active Learning to Train the Matcher
 """
@@ -75,7 +75,7 @@ from active_matcher.active_learning import ContinuousEntropyActiveLearner
 active_learner = ContinuousEntropyActiveLearner(model, labeler, max_labeled=500, on_demand_stop=False)
 trained_model = active_learner.train(fvs, seeds)
 
-# Step 13: Applying the Trained Matcher to ALL feature vectors
+# Step 13: Applying the Trained Matcher
 fvs = trained_model.predict(fvs, 'features', 'prediction')
 fvs = trained_model.prediction_conf(fvs, 'features', 'confidence')
 

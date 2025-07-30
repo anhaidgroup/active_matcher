@@ -62,7 +62,7 @@ from active_matcher.algorithms import down_sample
 sampled_fvs = down_sample(fvs, 0.1, 'score')
 
 # Step 11: Selecting Seeds
-seeds = select_seeds(sampled_fvs, 2, labeler, 'score')
+seeds = select_seeds(sampled_fvs, 50, labeler, 'score')
 
 # Step 12: Using Continuous Active Learning to Train the Matcher
 """
@@ -78,7 +78,7 @@ For simplicity, in this example, we will use max_labeled=500 and on_demand_stop=
 """
 from active_matcher.active_learning import ContinuousEntropyActiveLearner
 active_learner = ContinuousEntropyActiveLearner(model, labeler, max_labeled=500, on_demand_stop=False)
-trained_model = active_learner.train(fvs, seeds)
+trained_model = active_learner.train(sampled_fvs, seeds)
 
 # Step 13: Applying the Trained Matcher to ALL feature vectors
 fvs = trained_model.predict(fvs, 'features', 'prediction')
