@@ -68,7 +68,9 @@ The candidate set file 'cand.parquet' is a set of rolled up pairs, where cand['i
 
 ### Step 6: Specifying a Labeler
 
-ActiveMatcher uses a labeler to label a candidate tuple pair as match or non-match. It does this in the step to create a set of seeds for the active learning process and in the step of active learning itself (as we describe soon). Currently ActiveMatcher provides a command-line interface (CLI) labeler, a Web-based labeler, and a gold labeler. Among these, the CLI labeler can only be used when running ActiveMatcher on a single local machine. In what follows we discuss using the Web-based labeler and the gold labeler. 
+ActiveMatcher uses a labeler to label a candidate tuple pair as match or non-match. It does this in the step to create a set of seeds for the active learning process and in the step of active learning itself (as we describe soon). 
+
+Currently ActiveMatcher provides a command-line interface (CLI) labeler, a Web-based labeler, and a gold labeler. Among these, the CLI labeler can only be used when running ActiveMatcher on a single local machine. In what follows we discuss using the Web-based labeler and the gold labeler. 
 
 #### Using the Web Labeler
 
