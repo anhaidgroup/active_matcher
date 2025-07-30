@@ -14,13 +14,15 @@ As that document discusses, in the basic mode, ActiveMatcher executes multiple i
 2. Applies the matcher to all unlabeled examples in the candidate set and select a set of most informative examples (say 10). 
 3. Ask the user to label the selected examples.
 
-For example, ActiveMatcher may executes 50 iterations, in each of which it asks the user to label 10 examples as match/non-match. Recall that the candidate set is the output of the blocking step. It consists of tuple pairs (x,y). We have converted each such tuple pair to a feature vector. For simplicity, we will use the terms "example", "tuple pair", and "feature vector" interchangeably. The context should make clear what we refer to. For example, when we say "apply the matcher to an example", we mean applying the matcher to the feature vector of that example. When we say "the user labels an example, we mean the user labeling the tuple pair (x,y) as match/no-match.
+For example, ActiveMatcher may executes 50 iterations, in each of which it asks the user to label 10 examples as match/non-match. Recall that the candidate set is the output of the blocking step. It consists of tuple pairs (x,y). We have converted each such tuple pair to a feature vector. For simplicity, we will use the terms "example", "tuple pair", and "feature vector" interchangeably. The context should make clear what we refer to. 
+
+For example, when we say "apply the matcher to an example", we mean applying the matcher to the feature vector of that example. When we say "the user labels an example, we mean the user labeling the tuple pair (x,y) as match/no-match.
 
 For small to moderate size tables, the above basic mode works well. But for larger tables (such as 5M+ tuples), it may face a problem. If the tables are large, then the candidate set (the output of blocking) is often also quite large, having 50M to 500M tuple pairs, or more. In such cases, Step 2 of the iteration will take a long time to finish, because we have to apply the trained matcher to *all* unlabeled examples in the candidate set. This time can be anywhere from 3 to 10 minutes, depending on the size of the candidate set and the underlying hardware. 
 
 This means that after the user has labeled say 10 examples in an iteration, he or she would need to wait 3-10 minutes before a new set of 10 examples becomes available for the user to label. This is not a good user experience, and results in a long wait time. If the user has to label for 50 iterations, the wait time alone is already 150 minutes or more. 
 
-ActiveMatcher provides two solutions to the above problem: Sampling and Continuous Labeling, which we describe below. ***How can these be combined? Can we do CL without sampling?***
+ActiveMatcher provides two solutions to the above problem: Sampling and Continuous Labeling, which we describe below. These two solutions can also be combined, as we will see. 
 
 #### Solution 1: Sampling
 
@@ -69,14 +71,16 @@ fvs = trained_model.prediction_conf(fvs, 'features', 'confidence')
 
 #### Solution 2: Continuous Labeling
 
-In this solution, we get rid of the notion of "iteration". Specifically, we maintain a bucket P of examples that have been labeled so far, and a bucket Q of informative unlabeled examples. We then continuously run two background processes:
+In this solution, we get rid of the notion of "iteration". Specifically, we maintain a bucket P of examples that have been labeled so far, and a bucket Q of informative unlabeled examples. We then continuously run two processes:
 
-1. Whenever the user can label, we take an example from Q, present it to the user to label, then put the labeled example into bucket P.
+1. Whenever the user can label, we take an example from bucket Q, present it to the user to label, then put the labeled example into bucket P.
 2. Whenever bucket P has grown by a certain amount (of newly labeled examples), we retrain a matcher M using all examples in P (recall that all of these examples have been labeled), apply M to the unlabeled examples in the candidate set to select a set of informative examples, say 10, then put these examples into bucket Q.
 
-With a little bit of coordination, bucket Q will never be empty. So the user can label non-stop by just taking examples from Q. When the user has labeled 500-600 examples, say, he or she can stop, terminating the labeling process. We then train a final matcher M using all examples that have been labeled so far (that is, those in bucket P), then apply M to all examples in the candidate set to predict match/no-match. 
+With a little bit of coordination, bucket Q is not likely to ever be empty. So the user can label non-stop by just taking examples from Q. When the user has labeled 500-600 examples, say, he or she can stop, terminating the labeling process. We then train a final matcher M using all examples that have been labeled so far (that is, those in bucket P), then apply M to all examples in the candidate set to predict match/no-match. 
 
 The informative examples that this solution presents to the user (to label) may not be as "informative" as those selected by the solution where active learning runs in iterations. So the user may have to label slightly more examples to obtain the same matching accuracy. Our experiments however show that the difference is negligible, and this solution clearly provides a better user experience, because the user does not have to wait in between labeling for the next example to label. 
+
+We call the previous solution where active learning runs in iteration as doing *"batch active learning"* (because the user labels examples in batches), to contrast with the current solution which does *"continuous active learning"*. 
 
 ##### Using Continuous Labeling (CL)
 
