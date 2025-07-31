@@ -13,5 +13,5 @@ See examples on using ActiveMatcher on a [single machine](https://github.com/anh
 
 ### Further Pointers
 
-See [API documentation](). 
+See [API documentation](https://anhaidgroup.github.io/active_matcher). 
 For questions / comments, contact [our research group](mailto:entitymatchinginfo@gmail.com).
