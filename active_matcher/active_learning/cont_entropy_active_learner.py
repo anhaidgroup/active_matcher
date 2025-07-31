@@ -119,6 +119,7 @@ class ContinuousEntropyActiveLearner:
             the ids of the seed feature vectors for starting active learning, these must be present in `fvs`
         """
         type_check(fvs, 'fvs', pyspark.sql.DataFrame)
+        self.max_labeled_ = max(self._max_labeled, fvs.count())
         to_be_label_queue = PriorityQueue(self._queue_size)
         labeled_queue = Queue(self._queue_size * 5)
 
@@ -154,7 +155,13 @@ class ContinuousEntropyActiveLearner:
                 example = to_be_label_queue.get(timeout=10).item
             except Empty:
                 if not training_thread.is_alive():
-                    raise RuntimeError('label queue is empty by training thread is dead, likely due to an exception during training')
+                    # Check if training thread finished early due to insufficient examples
+                    if hasattr(self, 'local_training_fvs_') and self.local_training_fvs_ is not None:
+                        # Training thread finished early, return the labeled data
+                        labeled_data = self.local_training_fvs_.dropna(subset=['label']).copy()
+                        return labeled_data
+                    else:
+                        raise RuntimeError('label queue is empty by training thread is dead, likely due to an exception during training')
             else:
                 # example gotten, label and send back to training thread
                 example['label'] = float(self._labeler(example['id1'], example['id2']))
