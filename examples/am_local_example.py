@@ -4,7 +4,7 @@ import sys
 sys.path.append('.')
 sys.path.append('..')
 import shutil
-from sklearn.metrics import f1_scoremodel
+from sklearn.metrics import f1_score
 import pyspark.sql.functions as F
 from pyspark.sql import SparkSession
 from active_matcher.active_learning import EntropyActiveLearner
