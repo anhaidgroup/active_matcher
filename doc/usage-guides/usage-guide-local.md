@@ -80,7 +80,7 @@ We have provided a labeler that operates within the command-line interface (CLI)
 ```
 from active_matcher.labeler import CLILabeler
 
-labeler = CLILabeler(a_df=A, b_df=B, id_col:'_id')
+labeler = CLILabeler(a_df=A, b_df=B, id_col='_id')
 ```
 Here '_id' is the name of the ID columns for Tables A and B. This labeler will display a pair of tuples (x,y) to the CLI, side by side, then ask you to specify if x and y match, or do not match, or if you are unsure. It then displays the next pair of tuples, and so on. 
 
@@ -94,7 +94,7 @@ To use this Web labeler, put the following code into the Python file:
 ```
 from active_matcher.labeler import WebUILabeler
 
-labeler = WebUILabeler(a_df=A, b_df=B, id_col:'_id', flask_port=5005, streamlit_port=8501, flask_host='127.0.0.1')
+labeler = WebUILabeler(a_df=A, b_df=B, id_col='_id', flask_port=5005, streamlit_port=8501, flask_host='127.0.0.1')
 ```
 To explain the above paramaters: 
 * Here '_id' is the name of the ID columns for Tables A and B.
