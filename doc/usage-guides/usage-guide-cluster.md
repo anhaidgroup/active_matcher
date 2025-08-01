@@ -90,7 +90,7 @@ To use this Web labeler, put the following code into the Python file:
 ```
 from active_matcher.labeler import WebUILabeler
 
-labeler = WebUILabeler(a_df=A, b_df=B, id_col:'_id', flask_port=5005, streamlit_port=8501, flask_host='127.0.0.1')
+labeler = WebUILabeler(a_df=A, b_df=B, id_col='_id', flask_port=5005, streamlit_port=8501, flask_host='127.0.0.1')
 ```
 To explain the above paramaters: 
 * Here '_id' is the name of the ID columns for Tables A and B.
