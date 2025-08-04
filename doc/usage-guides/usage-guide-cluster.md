@@ -12,7 +12,7 @@ We now describe the basic mode for the cluster setting.
 
 ### Step 1: Download the Datasets
 
-First we download the datasets from GitHub. Navigate to the [dblp_acm folder](https://github.com/anhaidgroup/active_matcher/tree/main/examples/data/dblp_acm) then click 'cand.parquet' and click the download icon at the top. Repeat this for 'gold.parquet', 'table_a.parquet', and 'table_b.parquet'. Now move all these into a local folder called 'dblp_acm' on each node in the cluster. That is, each node must have a folder with the same path and that folder must contain the above three files. 
+First we download the datasets from GitHub. Navigate to the [dblp_acm folder](https://github.com/anhaidgroup/active_matcher/tree/main/examples/data/dblp_acm) then click 'cand.parquet' and click the download icon at the top. Repeat this for 'gold.parquet', 'table_a.parquet', and 'table_b.parquet'. Now move all these into a local folder called 'dblp_acm' on each node in the cluster. That is, each node must have a folder with the same path and that folder must contain the above four files. 
 
 To explain these files: 
 * The files 'table_a.parquet' and 'table_b.parquet' contain the tuples of Table A and Table B, respectively. Our goal is to match A and B, that is, find matches between them. 
