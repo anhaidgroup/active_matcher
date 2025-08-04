@@ -1,8 +1,6 @@
-## INSTALLATION INSTRUCTIONS
+## How to Install ActiveMatcher on a Cluster of Machines
 
-These instructions for obtaining a set of EC2 nodes on Amazon Web Service (AWS), setting up a Spark cluster on these nodes, and testing that the Spark cluster is working properly.
-
-We have tested installation with Ubuntu 22.04, Java Temurin JDK 17, Python 3.12, and Spark 3.5.6. We cannot guarantee successful installation on other versions.
+Here we provide instructions for installing ActiveMatcher on a cluster of machines on the cloud, specifically on Amazon Web Services (AWS). You can adapt this guide to install ActiveMatcher on a cluster of local machines. We have tested these installation instructions only with Ubuntu 22.04, Java Temurin JDK 17, Python 3.12, and Spark 3.5.6.
 
 ### Creating EC2 Nodes
 
@@ -14,14 +12,14 @@ You will need to create at least two EC2 instances to serve as nodes in your clu
 4. Give it a name. Any name is fine and you can change it later; something like ‘spark-cluster-master’ for your first instance and ‘spark-cluster-worker-x’ where x is an unique integer for your other instances is perfectly usable.
 5. Under ‘Application and OS image’, ‘Amazon Machine Image’ should be set to Ubuntu 22.04 and ‘Architecture’ should be set to 64-bit (x86).
 6. Select whichever instance type suits your purposes. If you do not know where to begin, m-type instances are general purpose instances well suited for a variety of tasks. Make sure that your instance has enough memory for whatever task you run it on. We recommend at least 5-10GB if you are running blocking tasks on lists involving a million tuples each; larger lists will require more memory.
-7. You can set your key pair to whatever you wish, but unless you have unusually high security concerns we recommend that all your instances share the same key pair. You will need this key pair to connect to instances and having one key pair for every instance is much easier to manage than having one key pair per instance.
-8. Under ‘Network Settings’ if you are creating a new security group make sure that the ‘Allow SSH traffic from’ option is not set to ‘Anywhere’, as this will allow anyone who can get ahold of your key pair to connect to the instance and constitutes a security risk. We recommend setting it to ‘My IP’ instead. Keep note of what your security group name is as new instances should be set to the same security group instead of new ones. This is not a mandatory step but configuring your cluster will be much easier if all of your EC2 instances share the same security group, as that will allow them to share connection rules, so it is recommended.
-9. You can set your harddisk space under ‘Configure Storage’ to whatever you feel is necessary. We recommend at least 20 gigabytes.
-10. You can now click on ‘Launch Instance’ at the bottom. Do not touch any other settings.
-11. You should navigate to ‘Instances’ from the navigation panel on the left; you can view and manage all your created instances from this page.
-12. When you create a new instance, it should start automatically. If you want to start or stop it manually, there is a button labeled ‘Instance state’ at the top of the page. Clicking on that will show a dropdown menu with ‘start instance’ and ‘stop instance’ buttons.
-13. You can select an instance from the list of instances by clicking on the checkbox to the left of its name. When you select an instance on the instance page, an informational panel will appear at the bottom of the page. Switch to the ‘details’ tab and record the private and public IPv4 addresses of any instance you create, as these will be necessary for connecting to instances through networks. Note that while the private address is fixed, the public address is different every time you restart an instance. You will need to re-record it each time. Instances that have been stopped do not have a public IPv4 address.
-14. You will also need to configure the instance’s security group to accept connections from your local machine and other instances. It is possible that this was set automatically when creating the security group, but check to make sure. If you have assigned all of your instances to a single security group, you will only need to do this once.
+7. You will have to create a key pair to securely access each instance. You can set your key pair to whatever you wish, but unless you have unusually high security concerns we recommend that all your instances share the same key pair. You will need this key pair to connect to instances and having one key pair for all instances is much easier to manage than having one key pair per instance.
+9. Under ‘Network Settings’ if you are creating a new security group make sure that the ‘Allow SSH traffic from’ option is not set to ‘Anywhere’, as this will allow anyone who can get ahold of your key pair to connect to the instance and constitutes a security risk. We recommend setting it to ‘My IP’ instead. Keep note of what your security group name is as new instances should be set to the same security group instead of new ones. This is not a mandatory step but configuring your cluster will be much easier if all of your EC2 instances share the same security group, as that will allow them to share connection rules, so it is recommended.
+10. You can set your harddisk space (that is, EBS volume) under ‘Configure Storage’ to whatever you feel is necessary. We recommend at least 20 gigabytes.
+11. You can now click on ‘Launch Instance’ at the bottom. Do not touch any other settings.
+12. You should navigate to ‘Instances’ from the navigation panel on the left; you can view and manage all your created instances from this page.
+13. When you create a new instance, it should start automatically. If you want to start or stop it manually, there is a button labeled ‘Instance state’ at the top of the page. Clicking on that will show a dropdown menu with ‘start instance’ and ‘stop instance’ buttons.
+14. You can select an instance from the list of instances by clicking on the checkbox to the left of its name. When you select an instance on the instance page, an informational panel will appear at the bottom of the page. Switch to the ‘details’ tab and record the private and public IPv4 addresses of any instance you create, as these will be necessary for connecting to instances through networks. Note that while the private address is fixed, the public address is different every time you restart an instance. You will need to re-record it each time. Instances that have been stopped do not have a public IPv4 address.
+15. You will also need to configure the instance’s security group to accept connections from your local machine and other instances. It is possible that this was set automatically when creating the security group, but check to make sure. If you have assigned all of your instances to a single security group, you will only need to do this once.
     - Switch to the ‘security’ tab in the informational panel and click on the security group link in the ‘security details’ section. This will open up the instance’s security group page.
     - Click on ‘edit inbound rules’ in the ‘inbound rules’ section.
     - Click on ‘add rule’ in the bottom left corner. This will create a new blank rule. Set the ‘type’ column to SSH and put your ip address in the box to the right of the ‘source’ column. Optionally, you may also give your rule a description.
@@ -30,15 +28,13 @@ You will need to create at least two EC2 instances to serve as nodes in your clu
 
 ### Installing ActiveMatcher
 
-You can find instructions for installing ActiveMatcher and its prerequisites (Python, Java, Joblib, mmh3, Numba, Numpy, Numpydoc, Pandas, Py_Stringmatching, PySpark, Scikit-Learn, Scipy, Threadpoolctl, TQDM, and Xgboost) here: [ActiveMatcher Linux Installation](https://github.com/anhaidgroup/active_matcher/blob/main/doc/installation-guides/install-linux-single-machine.md)
+Next you need to install ActiveMatcher. You can find instructions for installing ActiveMatcher and its prerequisites (Python, Java, Joblib, mmh3, Numba, Numpy, Numpydoc, Pandas, Py_Stringmatching, PySpark, Scikit-Learn, Scipy, Threadpoolctl, TQDM, and Xgboost) here: [ActiveMatcher Linux Installation](https://github.com/anhaidgroup/active_matcher/blob/main/doc/installation-guides/install-linux-single-machine.md)
 
-You will have to install ActiveMatcher and its prerequisites on every node in your cluster.
+You will have to install ActiveMatcher on every node in your cluster.
 
 ### Installing Spark
 
-Note that Spark requires Java in order to run. We recommend following the instructions for installing Java in the previous section as we can only guarantee Pylucene compatibility with specific versions of Java.
-
-Spark must be installed on every node in order to set up a cluster - you will have to repeat these steps for every EC2 instance you intend to use as a node.
+Next you need to install Spark. Spark must be installed on every node in order to set up a cluster - you will have to repeat the following steps for every EC2 instance you intend to use as a node.
 
 You can use these commands to download and unpack Spark:
 
@@ -60,11 +56,11 @@ Before setting up a Spark cluster you must open ports between each EC2 instance.
 - You should set the port range to a value of 0-65535.
   Doing this will allow each of your instances to accept connections from each other instance in your cluster.
 
-On the instance you have selected as your driver node, you will need to start a spark master. You can do so by navigating to the ‘spark’ folder and executing the following command:
+On the instance you have selected as your driver node, you will need to start a Spark master. You can do so by navigating to the ‘spark’ folder and executing the following command:
 
     ./sbin/start-master.sh
 
-The spark master UI is a useful tool for monitoring the status of your cluster. You can open up the spark master UI by entering the following into the search bar of a web browser.
+The Spark master UI is a useful tool for monitoring the status of your cluster. You can open up the Spark master UI by entering the following into the search bar of a web browser.
 
     {public IPv4 address of your driver node}:8080
 
@@ -72,26 +68,27 @@ Make sure that you have opened port 8080 on your driver node. This is the same a
 
     spark://ip-000-00-0-000.ec2.internal:7077
 
-On each of your worker machines, you must start a spark worker. You can do so by navigating to the ‘spark’ folder and executing the following command.
+On each of your worker machines, you must start a Spark worker. You can do so by navigating to the ‘spark’ folder and executing the following command.
 
     ./sbin/start-worker.sh {URL of your spark master}
 
-After you have started a worker, it will appear in the spark master UI, under the workers section. If it does not appear, make sure that your ports are opened.
-Each spark worker you create will also provide a worker UI to allow you to monitor the status of that worker. You can open up a worker node’s UI by entering the following into the search bar of a web browser.
+After you have started a worker, it will appear in the Spark master UI, under the workers section. If it does not appear, make sure that your ports are opened.
+
+Each Spark worker you create will also provide a worker UI to allow you to monitor the status of that worker. You can open up a worker node’s UI by entering the following into the search bar of a Web browser.
 
     {public IPv4 address of the worker node}:8081
 
 Make sure that you have opened port 8081 on the worker node.
 
-You now have a spark cluster running. You can run spark applications using the following command on your driver node:
+You now have a Spark cluster running. You can run Spark applications using the following command on your driver node:
 
     {path to the ‘spark’ folder}/bin/spark-submit --master {master URL} {path to your spark application}
 
-When you run a spark application, a job UI will be available which will allow you to monitor the status of your cluster as it performs the spark job. You can open up the job UI by entering the following into the search bar of a web browser:
+When you run a Spark application, a job UI will be available which will allow you to monitor the status of your cluster as it performs the Spark job. You can open up the job UI by entering the following into the search bar of a Web browser:
 
     {public IPv4 address of your driver node}:4040
 
-Make sure that you have opened port 4040 on your driver node. Note that the job UI is only available when you have a spark job running on your cluster; once the job finishes, the UI will become unavailable.
+Make sure that you have opened port 4040 on your driver node. Note that the job UI is only available when you have a Spark job running on your cluster; once the job finishes, the UI will become unavailable.
 
 ### Testing the Spark Cluster
 
