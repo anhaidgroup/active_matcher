@@ -86,13 +86,13 @@ If the output of this is
 where x is a number, you can go to Step 3B (you do not need to complete Step 3A).
 
 If
-
+```
 which python3
-
+```
 or
-
+```
 python3 --version
-
+```
 do not have the outputs listed above, continue to step 3A. 
 
 #### Step 3A: Installing Python 3.12
