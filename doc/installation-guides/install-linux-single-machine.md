@@ -89,11 +89,11 @@ If
 
 which python3
 
-Or
+or
 
 python3 --version
 
-If you did not have the outputs listed above, continue to step 3A. Otherwise, skip to 3B.
+do not have the outputs listed above, continue to step 3A. 
 
 #### Step 3A: Installing Python 3.12
 
