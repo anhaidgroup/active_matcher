@@ -18,11 +18,11 @@ We have used ActiveMatcher or earlier variants of ActiveMatcher in many real-wor
 
 ### Installation
 
-See instructions to install ActiveMatcher on [a single machine](https://github.com/anhaidgroup/active_matcher/tree/main/doc/installation-guides)  or [a cloud-based cluster](https://github.com/anhaidgroup/active_matcher/blob/main/doc/installation-guides/install-cloud-based-cluster.md). 
+See instructions to install ActiveMatcher on [a single machine](https://github.com/anhaidgroup/active_matcher/blob/main/doc/installation-guides/install-single-machine.md)  or [a cloud-based cluster](https://github.com/anhaidgroup/active_matcher/blob/main/doc/installation-guides/install-cloud-based-cluster.md). 
 
 ### How to Use
 
-See examples on using ActiveMatcher on a [single machine](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Single-Machine-Example.md) and a [cluster of machines](https://github.com/anhaidgroup/active_matcher/blob/main/examples/Cluster-Example.md). 
+See examples on using ActiveMatcher on a [single machine](https://github.com/anhaidgroup/active_matcher/blob/main/doc/usage-guides/usage-guide-local.md) and a [cluster](https://github.com/anhaidgroup/active_matcher/blob/main/doc/usage-guides/usage-guide-cluster.md). 
 
 ### Further Pointers
 
