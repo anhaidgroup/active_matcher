@@ -83,7 +83,7 @@ If the output of this is
 
 “Python 3.12.x”
 
-where x is a number, you can go to Step 3C after completing Step 3A (you do not need to complete Step 3B).
+where x is a number, you can go to Step 3B (you do not need to complete Step 3A).
 
 If
 
@@ -93,9 +93,9 @@ Or
 
 python3 --version
 
-If you did not have the outputs listed above, continue to step 3B. Otherwise, skip to 3C.
+If you did not have the outputs listed above, continue to step 3A. Otherwise, skip to 3B.
 
-#### Step 3B: Installing Python 3.12
+#### Step 3A: Installing Python 3.12
 
 Here we download Python 3.12, install it, and make it the default verison.
 Run the following commands in the terminal to install Python 3.12:
@@ -119,7 +119,7 @@ python3.12 -m ensurepip --default-pip
 python3.12 -m pip install --upgrade pip setuptools
 ```
 
-#### Step 3C: Setting Up the Python Environment
+#### Step 3B: Setting Up the Python Environment
 
 Now we will create a Python environment with Python 3.12. This step is necessary to make sure we use the correct version of Python with the correct dependencies. First, we install the venv module with the following command:
 ```
@@ -147,9 +147,9 @@ If the output says
 
 where x ≥ 0, then the Python environment setup was successful.
 
-#### Step 3D: Installing the Python Packages setuptools and build
+#### Step 3C: Installing the Python Packages setuptools and build
 
-Before installing these two packages, make sure you are in the virtual environment. If you have just finished Step 3C, you are in the virtual environment. Otherwise, to make sure your virtual environment is active, you can run:
+Before installing these two packages, make sure you are in the virtual environment. If you have just finished Step 3B, you are in the virtual environment. Otherwise, to make sure your virtual environment is active, you can run:
 
 ```
     source ~/active_matcher/bin/activate
