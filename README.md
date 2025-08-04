@@ -1,7 +1,7 @@
 ## ActiveMatcher: Using Active Learning to Predict Matches for Entity Matching
 
 ActiveMatcher (AM) is an open-source tool that uses active learning to predict matches for entity matching. It works as follows:
-* Suppose you have to match two tables A and B. We assume you have performed blocking on A and B (for example, by using Sparkly or Delex, one of the two blocking solutions that we are providing). Let C be the output of the blocking step. C consists of tuple pairs (x,y) where tuple x in Table A and tuple y in Table B are judged (by the blocking step) to be a possible match.
+* Suppose you have to match two tables A and B. We assume you have performed blocking on A and B (for example, by using [Sparkly](https://github.com/anhaidgroup/sparkly) or [Delex](https://github.com/anhaidgroup/delex), one of the two blocking solutions that we are providing). Let C be the output of the blocking step. C consists of tuple pairs (x,y) where tuple x in Table A and tuple y in Table B are judged (by the blocking step) to be a possible match.
 * AM will train a matcher M, which is a learning-based classifier, then apply M to each tuple pair (x,y) in C to predict if it is indeed a match or a non-match.
 * To train matcher M, AM performs a process called active learning, in which it will ask you (the user) to label a set of tuple pairs (say 500 pairs) as match/non-match. AM then uses these labeled pairs to train M. 
 
@@ -14,7 +14,7 @@ ActiveMatcher is still in beta testing and we are looking for users who want to 
 
 ### Case Studies and Performance Statistics
 
-We have used ActiveMatcher or earlier variants of ActiveMatcher in many real-world applications in domain science and industry. See this paper for more detail. We will also report its performance here in the near future. 
+We have used ActiveMatcher or earlier variants of ActiveMatcher in many real-world applications in domain science and industry. See [this paper](https://pages.cs.wisc.edu/~anhai/papers1/magellan-sigmod19.pdf) for more detail. We will also report its performance here in the near future. 
 
 ### Installation
 
