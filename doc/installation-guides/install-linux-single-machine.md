@@ -1,12 +1,10 @@
-# How to Install ActiveMatcher on a Linux Machine
+## How to Install ActiveMatcher on a Linux Machine
 
-This is a step-by-step guide to install ActiveMatcher and its necessary dependencies on a single Linux machine with Ubunutu 22.0.4
+This is a step-by-step guide to install ActiveMatcher on a single Linux machine with Ubunutu 22.0.4 and Python 3.12. You can try to adapt this guide to other configurations.
 
-he following software versions were installed on the test machine using the steps in this guide: Python 3.12. You can try to adapt this guide to other configurations.
+### Step 1: Installing Essential Packages
 
-### **Step 1: Install Essential Packages**
-
-This section deals with installing and updating packages that are neccessary for us to install Java and Python and later steps. We will install build-essential, libbz2-dev, libssl-dev, libreadline-dev, libsqlite3-dev, libffi-dev, zlib1g-dev, libncurses5-dev, libncursesw5-dev, xz-utils, tk-dev, and wget.
+First we install packages that are neccessary for installing Java and Python and for installation in the later steps. In particular, we will install build-essential, libbz2-dev, libssl-dev, libreadline-dev, libsqlite3-dev, libffi-dev, zlib1g-dev, libncurses5-dev, libncursesw5-dev, xz-utils, tk-dev, and wget.
 
 To do so, open up your terminal and run the following commands:
 
@@ -27,11 +25,11 @@ sudo apt install -y \
     wget
 ```
 
-Once these are installed, we can install Java, Python, and ActiveMatcher.
+Once these have been installed, we can install Java, Python, and ActiveMatcher.
 
-### **Step 2: Java Installation**
+### Step 2: Installing Java
 
-We strongly recommend installing Java Temurin JDK 17, which is a specific Java release that we have extensively experimented with. As that is not available from the Ubuntu package repository, to install Java, you will need to use the following commands:
+We strongly recommend installing Java Temurin JDK 17, which is a specific Java release that we have extensively experimented with. Since that release is not available from the Ubuntu package repository, we will have to install it. To do so, use the following commands.
 
 First,
 
@@ -55,13 +53,13 @@ Finally,
 exit
 ```
 
-You can check that you have successfully installed Java by running this command. If Java is installed, it should display a version number.
+You can check that you have successfully installed Java by running the following command. If Java is installed, it should display a version number.
 
 ```
 java --version
 ```
 
-### **Step 3: Python Installation**
+### Step 3: Installing Python
 
 This section deals with installing Python 3.12, creating a virtual environment, installing two Python packages (setuptools and build). Other versions of Python, other environments, or incorrect installations of the setuptools and build packages can cause issues with ActiveMatcher installation.
 
@@ -97,7 +95,7 @@ python3 --version
 
 If you did not have the outputs listed above, continue to step 3B. Otherwise, skip to 3C.
 
-#### **Step 3B: Python Installation**
+#### Step 3B: Python Installation
 
 To Install Python, we will first download Python 3.12 from Python's website, then we will install it, and finally we will make it the default verison.
 Run the following in the terminal to install Python 3.12:
