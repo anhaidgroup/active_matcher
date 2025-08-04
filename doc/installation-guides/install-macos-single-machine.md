@@ -1,14 +1,14 @@
-# How to Install ActiveMatcher on a MacOS M1 Machine
+## How to Install ActiveMatcher on a MacOS M1 Machine
 
-This is a step-by-step guide to install ActiveMatcher and its necessary dependencies on a single macOS machine with an M1 chip. If you are unsure if your Mac has an M1 chip, click on the Apple in the top left corner of your screen > About This Mac. If it says Chip Apple M1, then you have an M1 chip. If it does not say Chip Apple M1, you do not have an M1 chip.
+This is a step-by-step guide to install ActiveMatcher on a single macOS machine with an M1 chip. If you are unsure whether your Mac has an M1 chip, click on the Apple in the top left corner of your screen > About This Mac. If it says Chip Apple M1, then you have an M1 chip. If it does not say Chip Apple M1, you do not have an M1 chip.
 
-This guide has been tested on a 2020 MacBook Pro with an Apple M1 Chip, 8GB Memory, macOS version Sequoia 15.0.1, and a .zshrc profile. The following software versions were installed on the test machine using the steps in this guide: Python 3.12. You can try to adapt this guide to other configurations.
+This guide has been tested on a 2020 MacBook Pro with an Apple M1 Chip, 8GB Memory, macOS version Sequoia 15.0.1, and a .zshrc profile, using Python 3.12. You can try to adapt this guide to other configurations.
 
-If your machine has an Intel chip, this installation guide will not work for you. If your machine has an M2, M3, or M4 chip, this installation guide may work for you, but we have not tested it, and we can not guarantee that it will work.
+If your machine has an Intel chip, this installation guide will not work for you. If your machine has an M2, M3, or M4 chip, this installation guide may work for you, but we have not tested it.
 
-### **Step 1: Python Installation**
+### Step 1: Installing Python
 
-This section deals with installing Python 3.12, creating a virtual environment, and then installing two Python packages (setuptools and build). Other versions of Python, other environments, or incorrect installations of the setuptools and build packages can cause issues with ActiveMatcher installation.
+We first install Python 3.12, create a virtual environment, and then install two Python packages setuptools and build. Other versions of Python, other environments, or incorrect installations of the setuptools and build packages can cause issues with ActiveMatcher installation.
 
 If you suspect that you may have Python downloaded on your machine already, open up your terminal. Then, run the command:
 
@@ -36,9 +36,9 @@ Or
 
 python --version
 
-did not have the outputs listed above, do all substeps, A-D.
+did not have the outputs listed above, do all substeps A-D.
 
-#### **Step 1A: Homebrew Installation**
+#### Step 1A: Installing Homebrew
 
 Before installing Python, we need to ensure we have Homebrew installed. Homebrew is a popular open-source package manager for macOS and Linux, used to simplify installing, updating, and managing software and libraries.
 
@@ -57,17 +57,17 @@ The installation may prompt you to follow further instructions to add this to yo
 
 “Installation Successful!” 
 
-in the output, the download was successful.
+in the output, you are done with this step. 
 
-#### **Step 1B: Python Installation**
+#### Step 1B: Installing Python 3.12
 
 To download Python environments, we will use Homebrew. Run the following in the terminal to install Python 3.12:
 ```
 	brew install python@3.12
 ```
-#### **Step 1C: Python Environment Setup**
+#### Step 1C: Setting Up the Python Environment
 
-Now, we will create a Python environment with Python 3.12. This step is necessary to make sure we use the correct version of Python with the correct dependencies. In your terminal, run:
+Now we will create a Python environment with Python 3.12. This step is necessary to make sure we use the correct version of Python with the correct dependencies. In your terminal, run:
 ```
 	python -m venv ~/active_matcher
 ```
@@ -83,11 +83,11 @@ If the output says
 
 “Python 3.12.x”
 
-where x ≥ 0, then the Python environment setup was successful.
+where x ≥ 0, then the Python environment setup is successful.
 
-#### **Step 1D: Python Package Installation**
+#### Step 1D: Installing Python Packages setuptools and build
 
-We will be downloading two packages: setuptools and build. Before installing, make sure you are in the virtual environment. If you have just finished Step 1C, you are in the virtual environment. Otherwise, to make sure your virtual environment is active, you can run:
+Before installing these packages, make sure you are in the virtual environment. If you have just finished Step 1C, you are in the virtual environment. Otherwise, to make sure your virtual environment is active, you can run:
 ```
 	source ~/active_matcher/bin/activate
 ```
@@ -103,11 +103,11 @@ If at any point during the installation you close your terminal, you will need t
 ```
 	source ~/active_matcher/bin/activate
 ```
-### **Step 2: ActiveMatcher Installation**
+### Step 2: Installing ActiveMatcher
 
-Now that you have the correct version of Python installed, we can download ActiveMatcher. To download ActiveMatcher, use one of the following options:
+To install ActiveMatcher, use one of the following two options:
 
-#### **Option 1: Pip Installing from PyPI**
+#### Option 1: Pip Installing from PyPI
 
 You can install ActiveMatcher from PyPI, using the following command:
 ```
@@ -115,7 +115,7 @@ You can install ActiveMatcher from PyPI, using the following command:
 ```
 This command will install ActiveMatcher and all of its dependencies, such as Joblib, mmh3, Numba, Numpy, Numpydoc, Pandas, Py_Stringmatching, PySpark, Scikit-Learn, Scipy, Threadpoolctl, TQDM, and Xgboost.
 
-#### **Option 2: Pip Installing from GitHub**
+#### Option 2: Pip Installing from GitHub
 
 Instead of pip installing from PyPI, you may want to pip install ActiveMatcher from its GitHub repo. This happens if you want to install the latest ActiveMatcher version compared to the version on PyPI. For example, the GitHub version may contain bug fixes that the PyPI version does not.
 
