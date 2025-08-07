@@ -6,9 +6,9 @@ ActiveMatcher (AM) is an open-source tool that uses active learning to predict m
 * To train matcher M, AM performs a process called active learning, in which it will ask you (the user) to label a set of tuple pairs (say 500 pairs) as match/non-match. AM then uses these labeled pairs to train M. 
 
 As described, AM is distinguished in several important aspects: 
-* It solves the problem of labeling data for machine learning. You do not have to worry about how to select a data set to label, how to make sure this data set is good for training purposes, etc. AM will take care of this process. You only need to label a few hundred tuple pairs. In practice, this labeling step typically takes 2-3 hours, and can be done by anyone who has been trained on what it means for two tuples x and y to match.
-* AM scales to very large datasets. In practice it is not unusual for the set C (the output of blocking) to have 100M to 1B tuple pairs. At this scale, performing well-known machine learning steps (such as featurization) and active learning is difficult. AM built on years of research in our group to solve these problems.
-* AM achieves high accuracy using machine learning (ML). Currently AM works with traditional ML models, such as random forest, XGBoost. We are extending AM to work with deep learning and GenAI technologies, but these are not yet made available in the current release.
+* **It solves the problem of labeling data for machine learning.** You do not have to worry about how to select a data set to label, how to make sure this data set is good for training purposes, etc. AM will take care of this process. You only need to label a few hundred tuple pairs. In practice, this labeling step typically takes 2-3 hours, and can be done by anyone who has been trained on what it means for two tuples x and y to match.
+* **AM scales to very large datasets.** In practice it is not unusual for the set C (the output of blocking) to have 100M to 1B tuple pairs. At this scale, performing well-known machine learning steps (such as featurization) and active learning is difficult. AM built on years of research in our group to solve these problems.
+* **AM achieves high accuracy using machine learning (ML).** Currently AM works with traditional ML models, such as random forest, XGBoost. We are extending AM to work with deep learning and GenAI technologies, but these are not yet made available in the current release.
 
 ActiveMatcher is still in beta testing and we are looking for users who want to use it (with active support from our team). 
 
