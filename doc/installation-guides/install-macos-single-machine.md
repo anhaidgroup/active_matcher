@@ -105,6 +105,12 @@ If at any point during the installation you close your terminal, you will need t
 ```
 ### Step 2: Installing ActiveMatcher
 
+Before installing ActiveMatcher, we should return to the root directory by running the following command in the terminal:
+
+```
+    cd
+```
+
 In the future you can install ActiveMatcher using one of the following two options. **As of now, since ActiveMatcher is still in testing, we do not yet enable Option 1 (Pip installing from PyPI). Thus you should use Option 2 (Pip installing from GitHub).**
 
 #### Option 1: Pip Installing from PyPI
