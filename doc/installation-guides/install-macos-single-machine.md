@@ -105,9 +105,11 @@ If at any point during the installation you close your terminal, you will need t
 ```
 ### Step 2: Installing ActiveMatcher
 
-To install ActiveMatcher, use one of the following two options:
+In the future you can install ActiveMatcher using one of the following two options. **As of now, since ActiveMatcher is still in testing, we do not yet enable Option 1 (Pip installing from PyPI). Thus you should use Option 2 (Pip installing from GitHub).**
 
 #### Option 1: Pip Installing from PyPI
+
+**Note that this option is not yet enabled. Please use Option 2.**
 
 You can install ActiveMatcher from PyPI, using the following command:
 ```
