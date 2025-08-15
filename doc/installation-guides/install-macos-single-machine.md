@@ -103,7 +103,43 @@ If at any point during the installation you close your terminal, you will need t
 ```
 	source ~/active_matcher/bin/activate
 ```
-### Step 2: Installing ActiveMatcher
+
+### Step 2: Installing Java
+
+We strongly recommend installing Java Temurin JDK 17, which is a specific Java release that we have extensively experimented with. We will use Homebrew for the installation. If you do not use Homebrew, you may download a version of Java that is not supported by an arm64 architecture. If you do not have Homebrew installed, or are unsure if you have Homebrew installed, please look at step 1A above to install Homebrew.
+
+#### Step 2A: Java Installation
+We are going to download the Temurin 17 JDK that is optimized for your machine running on an M1 chip. To install Java, open a terminal and run the following:
+```
+	brew install --cask temurin@17
+```
+
+To check if this was successful, run the following command:
+```
+	/usr/libexec/java_home -V
+```
+If the output contains 
+```
+“OpenJDK version 17.x.y”
+```
+where x and y are numbers, the installation was successful.
+
+#### Step 2B: Setting JAVA_HOME Environment Variable
+We need to set this version of Java as the default for our machine.  To do so, open up a terminal and make sure you are in the root directory (if you are unsure if you are in the root directory or not, run cd to get back to the root directory). Next, run:
+```
+	echo 'export JAVA_HOME=$(/usr/libexec/java_home -v17)' >> ~/.zshrc
+```
+To enact these changes, run:
+```
+	source ~/.zshrc
+```
+To check if these changes were successful, run:
+```
+	echo $JAVA_HOME
+```
+If the installation was successful, you will see a file path output.
+
+### Step 3: Installing ActiveMatcher
 
 Before installing ActiveMatcher, we should return to the root directory by running the following command in the terminal:
 
