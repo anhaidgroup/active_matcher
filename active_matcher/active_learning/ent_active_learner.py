@@ -83,7 +83,12 @@ class EntropyActiveLearner:
         batch['label'] = batch[['id1', 'id2']].apply(lambda x: float(self._labeler(*x.values)), axis=1)
         batch['labeled_in_iteration'] = -2
         self.local_training_fvs_ = batch
-        training_fvs = spark.createDataFrame(self.local_training_fvs_)
+        # Create schema from the fvs and add new columns
+        schema = fvs.schema
+        for field in ['label', 'labeled_in_iteration']:
+            if field not in [f.name for f in schema.fields]:
+                schema = schema.add(field, T.DoubleType())
+        training_fvs = spark.createDataFrame(self.local_training_fvs_, schema=schema)
 
         self._model.train(training_fvs, 'features', 'label')
         return copy(self._model)
@@ -141,20 +146,25 @@ class EntropyActiveLearner:
                 else:
                     log.info('running al to completion would label everything, but self._terminate_if_label_everything is False so AL will still run')
 
-            # Train initial model with existing data
+            # if there is no existing training data, use seeds
+            if existing_training_data is None:
+                self.local_training_fvs_ = seeds.copy()
+                
+            # add labeled_in_iteration column
+            self.local_training_fvs_['labeled_in_iteration'] = -1
+            
+            # create schema to avoid issues with types
+            schema = spark.createDataFrame(self.local_training_fvs_).schema
+            
+            # train initial model with existing data
             if existing_training_data is not None:
                 log.info('Training initial model with existing data')
-                initial_training_fvs = spark.createDataFrame(self.local_training_fvs_)\
+                initial_training_fvs = spark.createDataFrame(self.local_training_fvs_, schema=schema)\
                                            .repartition(len(self.local_training_fvs_) // 100 + 1, '_id')\
                                            .persist()
                 self._model.train(initial_training_fvs, 'features', 'label')
                 initial_training_fvs.unpersist()
                 log.info('Initial model training complete')
-            else:
-                self.local_training_fvs_ = seeds.copy()
-            # seed feature vectors
-            self.local_training_fvs_['labeled_in_iteration'] = -1
-            schema = spark.createDataFrame(self.local_training_fvs_).schema
             
             total_pos, total_neg = self._get_pos_negative(self.local_training_fvs_)
             if total_pos == 0 or total_neg == 0:
@@ -228,7 +238,7 @@ class EntropyActiveLearner:
                     break
                 i += 1
 
-            training_fvs = spark.createDataFrame(self.local_training_fvs_)
+            training_fvs = spark.createDataFrame(self.local_training_fvs_, schema=schema)
             # final train model
             self._model.train(training_fvs, 'features', 'label')
         if isinstance(self._labeler, WebUILabeler):
