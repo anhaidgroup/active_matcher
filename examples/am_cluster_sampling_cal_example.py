@@ -28,7 +28,7 @@ spark =  SparkSession.builder\
                         .getOrCreate()
 
 # Step 5: Reading the Data
-#path to the data
+#path to the data, should modify based on your data path
 data_dir = Path(__file__).resolve().parent
 A = spark.read.parquet(str(data_dir / 'table_a.parquet'))
 B = spark.read.parquet(str(data_dir / 'table_b.parquet'))
