@@ -4,7 +4,7 @@ This is a step-by-step guide to install ActiveMatcher on a single macOS machine 
 
 This guide has been tested on a 2020 MacBook Pro with an Apple M1 Chip, 8GB Memory, macOS version Sequoia 15.0.1, and a .zshrc profile, using Python 3.12. You can try to adapt this guide to other configurations.
 
-If your machine has an Intel chip, this installation guide will not work for you. If your machine has an M2, M3, or M4 chip, this installation guide may work for you, but we have not tested it.
+If your machine has an Intel, M2, M3, or M4 chip, this installation guide may work for you, but we have not tested it.
 
 ### Step 1: Installing Python
 
