@@ -11,6 +11,7 @@ from active_matcher.feature.feature import (
 )
 
 import pandas as pd
+import numpy as np
 
 
 class TestExactMatchFeature:
