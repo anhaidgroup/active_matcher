@@ -101,15 +101,11 @@ class TestContinuousEntropyActiveLearner:
         assert learner_existing.local_training_fvs_ is not None
         assert "labeled_in_iteration" in learner_existing.local_training_fvs_.columns
 
-    def test_train_label_everything(self, spark_session, temp_dir: Path, default_model, seed_df):
+    def test_train_label_everything(self, spark_session, temp_dir: Path, default_model, seed_df, fvs_df):
         """Exercise label-everything path."""
         labeler = GoldLabeler({(10, 20), (12, 22)})
-        fvs_small = spark_session.createDataFrame(
-            [
-                {"_id": 0, "id1": 10, "id2": 20, "features": [0.1, 0.2]},
-                {"_id": 1, "id1": 11, "id2": 21, "features": [0.2, 0.1]},
-            ]
-        )
+        # Use fvs_df fixture and limit to 2 rows
+        fvs_small = fvs_df.limit(2)
         learner_label_all = ContinuousEntropyActiveLearner(
             default_model, labeler, queue_size=3, max_labeled=1, on_demand_stop=False, parquet_file_path=str(temp_dir / "cont_label_all.parquet")
         )
@@ -119,8 +115,9 @@ class TestContinuousEntropyActiveLearner:
 
     def test_train_user_stop(self, spark_session, temp_dir: Path, default_model, seed_df, fvs_df, id_df_factory):
         """Ensure user stop is handled."""
-        a_df = id_df_factory([10, 11, 12, 13, 14])
-        b_df = id_df_factory([20, 21, 22, 23, 24])
+        # Include all id1 and id2 values from fvs_df fixture
+        a_df = id_df_factory([10, 11, 12, 13, 14, 15])
+        b_df = id_df_factory([20, 21, 22, 23, 24, 25])
         stop_labeler = StopLabeler(a_df, b_df)
 
         learner_stop = ContinuousEntropyActiveLearner(
@@ -129,24 +126,14 @@ class TestContinuousEntropyActiveLearner:
         stopped = learner_stop.train(fvs_df, seed_df)
         assert stopped is not None
 
-    def test_train_queue_empty_returns_df(self, spark_session, temp_dir: Path, default_model):
+    def test_train_queue_empty_returns_df(self, spark_session, temp_dir: Path, default_model, seed_df, fvs_df):
         """Ensure queue-empty branch returns labeled DataFrame."""
         labeler = GoldLabeler({(10, 20), (12, 22)})
-        fvs_small = spark_session.createDataFrame(
-            [
-                {"_id": 0, "id1": 10, "id2": 20, "features": [0.1, 0.2]},
-                {"_id": 1, "id1": 11, "id2": 21, "features": [0.2, 0.1]},
-            ]
-        )
-        seed_all_positive = pd.DataFrame(
-            {
-                "_id": [0, 1],
-                "id1": [10, 11],
-                "id2": [20, 21],
-                "features": [[0.1, 0.2], [0.2, 0.1]],
-                "label": [1.0, 1.0],
-            }
-        )
+        # Use fvs_df fixture and limit to 2 rows
+        fvs_small = fvs_df.limit(2)
+        # Use seed_df fixture but make all labels positive
+        seed_all_positive = seed_df.copy()
+        seed_all_positive["label"] = 1.0
         learner_empty = ContinuousEntropyActiveLearner(
             default_model, labeler, queue_size=3, max_labeled=3, on_demand_stop=True, parquet_file_path=str(temp_dir / "cont_empty.parquet")
         )

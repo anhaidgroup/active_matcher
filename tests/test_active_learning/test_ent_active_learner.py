@@ -8,8 +8,11 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+import pyspark.sql.functions as F
 
-from active_matcher.active_learning.ent_active_learner import EntropyActiveLearner
+from active_matcher.active_learning.ent_active_learner import (
+    EntropyActiveLearner,
+)
 from active_matcher.labeler import CustomLabeler, GoldLabeler
 
 
@@ -78,43 +81,44 @@ class TestEntropyActiveLearner:
         assert learner_existing.local_training_fvs_ is not None
         assert "labeled_in_iteration" in learner_existing.local_training_fvs_.columns
 
-    def test_train_label_everything(self, spark_session, temp_dir: Path, default_model, seed_df):
+    def test_train_label_everything(self, spark_session, temp_dir: Path, default_model, seed_df, fvs_df):
         """Ensure label-everything path is exercised."""
         labeler = GoldLabeler({(10, 20), (12, 22)})
-        fvs_with_li = [
-            {"_id": 0, "id1": 10, "id2": 20, "features": [0.1, 0.2], "labeled_in_iteration": 0},
-            {"_id": 1, "id1": 11, "id2": 21, "features": [0.2, 0.1], "labeled_in_iteration": 0},
-        ]
+        # Use fvs_df and add labeled_in_iteration column
+        fvs_with_li = (
+            fvs_df.limit(2)
+            .withColumn("labeled_in_iteration", F.lit(0))
+        )
+        parquet_path = str(temp_dir / "ent_label_all.parquet")
         learner_label_all = EntropyActiveLearner(
-            default_model, labeler, batch_size=10, max_iter=1, parquet_file_path=str(temp_dir / "ent_label_all.parquet")
+            default_model, labeler, batch_size=10, max_iter=1,
+            parquet_file_path=parquet_path
         )
         learner_label_all._terminate_if_label_everything = True
-        fvs_label_all = spark_session.createDataFrame(fvs_with_li)
-        label_all = learner_label_all.train(fvs_label_all, seed_df)
+        label_all = learner_label_all.train(fvs_with_li, seed_df)
         assert label_all is not None
 
-    def test_train_error_pos_neg(self, spark_session, temp_dir: Path, default_model, fvs_df):
+    def test_train_error_pos_neg(
+        self, spark_session, temp_dir: Path, default_model, fvs_df, seed_df
+    ):
         """Ensure runtime error is raised when all labels are same."""
         labeler = GoldLabeler({(10, 20), (12, 22)})
-        seed_all_positive = pd.DataFrame(
-            {
-                "_id": [0, 1],
-                "id1": [10, 11],
-                "id2": [20, 21],
-                "features": [[0.1, 0.2], [0.2, 0.1]],
-                "label": [1.0, 1.0],
-            }
-        )
+        # Use seed_df fixture but make all labels positive
+        seed_all_positive = seed_df.copy()
+        seed_all_positive["label"] = 1.0
+        parquet_path = str(temp_dir / "ent_error.parquet")
         learner_error = EntropyActiveLearner(
-            default_model, labeler, batch_size=1, max_iter=1, parquet_file_path=str(temp_dir / "ent_error.parquet")
+            default_model, labeler, batch_size=1, max_iter=1,
+            parquet_file_path=parquet_path
         )
         with pytest.raises(RuntimeError):
             learner_error.train(fvs_df, seed_all_positive)
 
     def test_train_user_stop(self, spark_session, temp_dir: Path, default_model, seed_df, fvs_df, id_df_factory):
         """Ensure user stop is handled gracefully."""
-        a_df = id_df_factory([10, 11, 12])
-        b_df = id_df_factory([20, 21, 22])
+        # Include all id1 and id2 values from fvs_df fixture
+        a_df = id_df_factory([10, 11, 12, 13, 14, 15])
+        b_df = id_df_factory([20, 21, 22, 23, 24, 25])
         stop_labeler = StopLabeler(a_df, b_df)
         learner_stop = EntropyActiveLearner(
             default_model, stop_labeler, batch_size=1, max_iter=1, parquet_file_path=str(temp_dir / "ent_stop.parquet")
