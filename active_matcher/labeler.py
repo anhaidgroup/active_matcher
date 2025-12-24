@@ -84,7 +84,7 @@ class CLILabeler(Labeler):
             if label.startswith('h'):
                 self._help_interactive(row1, row2)
                 print("=" * 80)
-                self._print_row(row1, row2, fields=self.current_fields)
+                self._print_row(row1, row2, fields=self._current_fields)
                 print("-" * 80)
                 label = None 
             elif label.startswith('s'):
