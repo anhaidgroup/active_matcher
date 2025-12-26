@@ -11,11 +11,6 @@ from active_matcher.storage import (
     MemmapDataFrame,
     SqliteDataFrame,
     SqliteDict,
-    hash_map_insert_key,
-    hash_map_insert_keys,
-    hash_map_get_key,
-    hash_map_get_keys,
-    LongIntHashMap,
 )
 
 
