@@ -115,7 +115,7 @@ def select_seeds(fvs, nseeds, labeler, score_column='score',
         seeds = []
         pos_count = 0
         neg_count = 0
-
+    existing_ids = set(existing_training_data['_id'].tolist()) if existing_training_data is not None else set()
     # TODO handle edge cases
     fvs = fvs.filter((~F.isnan(score_column)) & (score_column.isNotNull()))
     # lowest scoring vectors
@@ -123,13 +123,11 @@ def select_seeds(fvs, nseeds, labeler, score_column='score',
                     .limit(nseeds)\
                     .toPandas()\
                     .iterrows()
-
     # highest scoring vectors
     maybe_pos = fvs.sort(score_column, ascending=False)\
                     .limit(nseeds)\
                     .toPandas()\
                     .iterrows()
-
     # iteratively label vectors, attempt to produce a 
     # set 50% positive 50% negative set 
     i = 0
@@ -139,6 +137,12 @@ def select_seeds(fvs, nseeds, labeler, score_column='score',
     while pos_count + neg_count < nseeds and i < nseeds * 2:
         try:
             idx, ex = next(maybe_pos) if pos_count <= neg_count else next(maybe_neg)
+
+            # Skip if this _id already exists in seeds
+            if ex['_id'] in existing_ids:
+                log.debug(f'Skipping _id={ex["_id"]}, already exists in seeds')
+                continue
+
             label = float(labeler(ex['id1'], ex['id2']))
             
             if label == -1.0:  # User requested to stop
@@ -158,7 +162,7 @@ def select_seeds(fvs, nseeds, labeler, score_column='score',
             # Save the newly labeled seed immediately
             new_seed_df = pd.DataFrame([ex])
             save_training_data_streaming(new_seed_df, parquet_file_path, log)
-            
+            existing_ids.add(ex['_id'])
         except StopIteration:
             log.warning("Ran out of examples before reaching nseeds")
             break
