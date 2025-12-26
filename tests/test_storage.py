@@ -45,8 +45,7 @@ class TestMemmapArray:
         """Test MemmapArray init method."""
         arr = np.array([1, 2, 3], dtype=np.int32)
         mmap_arr = MemmapArray(arr)
-        # _on_spark is not set by default, so init() will use local file
-        # We need to set it to False explicitly since it's checked in init()
+
         if not hasattr(mmap_arr, '_on_spark'):
             mmap_arr._on_spark = False
         mmap_arr.init()
